@@ -1,0 +1,104 @@
+﻿{
+    "prompt_file":  "internal/wip-flow-01-anomaly-detection/prompts/flow01_result_prompt.md",
+    "model_context":  {
+                          "case_id":  "00000000-0000-0000-0000-000000000001",
+                          "flow":  {
+                                       "flow_no":  "01",
+                                       "flow_name":  "异常发现",
+                                       "purpose":  "异常发现"
+                                   },
+                          "has_stage_data":  true,
+                          "knowledge_pack":  [
+                                                 {
+                                                     "scope":  "global",
+                                                     "name":  "factory-exception-process",
+                                                     "path":  "knowledge/factory-exception-process.md",
+                                                     "content":  "工厂异常处理通用背景知识，实际运行时会放入完整内容。"
+                                                 },
+                                                 {
+                                                     "scope":  "flow",
+                                                     "name":  "flow01-business-rules",
+                                                     "path":  "internal/wip-flow-01-anomaly-detection/knowledge/flow01-business-rules.md",
+                                                     "content":  "Flow 01 异常发现业务规则，实际运行时会放入完整内容。"
+                                                 }
+                                             ],
+                          "raw_inputs":  {
+                                             "warehouse_high_wip":  {
+                                                                        "stage_name":  "DNW-ANN",
+                                                                        "actual_wip":  8050,
+                                                                        "target_wip":  258,
+                                                                        "queue_wip":  8000,
+                                                                        "queue_actual_ratio":  0.994,
+                                                                        "wip_gap":  7792,
+                                                                        "wip_gap_rate":  30.2,
+                                                                        "biz_time":  "2026-04-07 15:45:26"
+                                                                    },
+                                             "case_snapshot":  {
+                                                                   "case_id":  "00000000-0000-0000-0000-000000000001",
+                                                                   "flow":  {
+                                                                                "flow_no":  "01",
+                                                                                "flow_name":  "异常发现"
+                                                                            },
+                                                                   "snapshot_inputs":  {
+                                                                                           "warehouse_high_wip":  {
+                                                                                                                      "stage_name":  "DNW-ANN",
+                                                                                                                      "actual_wip":  8050,
+                                                                                                                      "target_wip":  258,
+                                                                                                                      "queue_wip":  8000,
+                                                                                                                      "queue_actual_ratio":  0.994,
+                                                                                                                      "wip_gap":  7792,
+                                                                                                                      "wip_gap_rate":  30.2,
+                                                                                                                      "biz_time":  "2026-04-07 15:45:26"
+                                                                                                                  },
+                                                                                           "snapshot_mock":  {
+                                                                                                                 "priority":  "P1",
+                                                                                                                 "operator":  "Wang Fei",
+                                                                                                                 "case_age":  "3.5h",
+                                                                                                                 "flow_elapsed":  "22min",
+                                                                                                                 "sla_remaining":  "18min",
+                                                                                                                 "owner":  "MFG / Case Owner",
+                                                                                                                 "eligible_tool":  "2 / 8",
+                                                                                                                 "tool_uptime":  "92%",
+                                                                                                                 "move_out":  "73% Plan",
+                                                                                                                 "move_out_gap":  "-320",
+                                                                                                                 "q_time":  "High",
+                                                                                                                 "min_remain":  "1.8h",
+                                                                                                                 "downstream_starvation":  {"next_stage_name": "Clean", "actual_wip": 1200, "target_wip": 1500, "wip_ratio": 0.8, "if_starved": "Starvation"}
+                                                                                                             },
+                                                                                           "flow_mock":  {
+                                                                                                             "trend":  "连续升高",
+                                                                                                             "trigger_source":  "MES / BI / Planning"
+                                                                                                         }
+                                                                                       },
+                                                                   "source_data":  {
+                                                                                       "warehouse_high_wip":  {
+                                                                                                                  "stage_name":  "DNW-ANN",
+                                                                                                                  "actual_wip":  8050,
+                                                                                                                  "target_wip":  258,
+                                                                                                                  "queue_wip":  8000,
+                                                                                                                  "queue_actual_ratio":  0.994,
+                                                                                                                  "wip_gap":  7792,
+                                                                                                                  "wip_gap_rate":  30.2,
+                                                                                                                  "biz_time":  "2026-04-07 15:45:26"
+                                                                                                              },
+                                                                                       "snapshot_mock_file":  "internal/wip-case-snapshot/data/snapshot_mock.json",
+                                                                                       "flow_mock_file":  "internal/wip-flow-01-anomaly-detection/data/flow01_mock.json"
+                                                                                   }
+                                                               },
+                                             "flow_mock":  {
+                                                               "trend":  "连续升高",
+                                                               "trigger_source":  "MES / BI / Planning"
+                                                           }
+                                         },
+                          "generation_rules":  [
+                                                   "当前 Agent 自己根据 raw_inputs 提取字段、做业务判断并组织 text/content 轻量结构。",
+                                                   "示例输入输出只用于结构参考，标题可以一致，正文不要原文照抄，也不要拼凑字段；内容要围绕本次 raw_inputs 形成连贯分析。",
+                                                   "脚本不构造最终展示结构或固定话术。",
+                                                   "SQL 和 mock 都没有的字段直接省略，不输出占位值。"
+                                               ],
+                          "output_language":  "zh-CN"
+                      }
+}
+
+
+

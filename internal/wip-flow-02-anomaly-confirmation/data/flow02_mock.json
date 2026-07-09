@@ -1,0 +1,24 @@
+﻿{
+  "data_freshness": {
+    "status": "数据刷新正常",
+    "max_allowed_delay_min": 30
+  },
+  "metric_scope": {
+    "scope": "Stage WIP",
+    "actual_wip_definition": "running + wait + reserved + finished + hold + running hold + inventory hold",
+    "queue_wip_definition": "wait + reserved + finished"
+  },
+  "target_validity": {
+    "status": "有效",
+    "rule": "target_wip > 0"
+  },
+  "duration_check": {
+    "status": "异常持续超过确认窗口",
+    "duration": "3.5h",
+    "min_confirm_duration": "30min"
+  },
+  "duplicate_case_check": {
+    "status": "无重复 Case",
+    "open_case_count": 0
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "intent": "wip_analysis",
+  "action": "start",
+  "message": "WIP最高的原因是什么",
+  "return_type": "json"
+}

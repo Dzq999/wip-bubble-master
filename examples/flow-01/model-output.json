@@ -1,0 +1,90 @@
+{
+  "ok": true,
+  "case_id": "CASE-WIP-DNW-ANN-001",
+  "flow_no": "01",
+  "flow_name": "异常发现",
+  "flow_status": "Closed",
+  "case_status": "Processing",
+  "next_flow_no": "02",
+  "next_flow_name": "异常确认",
+  "bubble_status": "严重 WIP Bubble",
+  "text": "# 01 异常发现\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: CASE-WIP-DNW-ANN-001\n- Priority: P1\n- Object: DNW-ANN Stage\n- Case Type: 严重 WIP Bubble\n- Occur Time: 2026-04-07 15:45:26\n- Operator: Wang Fei\n- Current Stage: 01 异常发现\n- Case Age: 3.5h\n- Stage Elapsed: 22min\n- SLA Remaining: 18min\n- Owner: MFG / Case Owner\n- Status: Processing\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- WIP: Actual 8,050 / Target 258\n- Queue: 8,000 / 99.38%\n- Eligible Tool: 2 / 8, 92% Tool Uptime\n- Move-Out: 73% Plan, Gap -320\n- Q-Time: High, Min Remain 1.8h\n- Downstream: Next Stage = PW-PH; Status = Starvation\n\n## 当前阶段对话\n### 系统 / 用户触发\n系统检测到 DNW-ANN Stage Actual WIP 明显高于 Target WIP，已自动触发 Flow 01 异常发现。\n\n### Agent 接管\n我先接管异常发现环节，重点确认最高 WIP 对象、Target 口径和是否达到 WIP Bubble 触发条件。\n\n### Agent 思考过程\n当前阶段只判断是否形成异常发现记录；根因还需要后续 Flow 02 做口径校验和现场状态确认。\n\n### Agent 分析计划\n- 读取当前最高 WIP stage 原始记录。\n- 对比 Actual WIP、Target WIP 与 Severe UCL。\n- 查看 Queue 是否主导 WIP 堆积。\n- 汇总风险快照并判断是否进入 Flow 02。\n\n### 数据 / 工具调用\n- MES / WIP Profile: Actual WIP = 8,050 [Done]\n- Planning Config: Target WIP = 258 [Done]\n- BI Trend: WIP 连续升高 [Done]\n\n### Agent 观察结果\n- DNW-ANN Stage Actual WIP 为 8,050，Target WIP 为 258。\n- WIP Gap 为 +7,792，约为 Target 的 31.2 倍。\n- Queue WIP 为 8,000，占 Actual WIP 99.38%，堆积主要集中在等待队列侧。\n\n### Agent 分析判断\nActual WIP 已高于 Severe UCL，且 Queue 占比接近全部 WIP，因此满足严重 WIP Bubble 的发现条件；但 Flow 01 不能直接判定最终根因。\n\n### Agent 阶段输出\n已生成 DNW-ANN Stage 的严重 WIP Bubble 异常发现记录，建议进入 Flow 02 异常确认。\n\n### AI Agent\n是否确认进入 02 异常确认？下一阶段只校验数据刷新、指标口径、Target 有效性、异常持续时间和重复 Case。\n\n## 当前阶段结果\n### 业务结果\n- Bubble Status: 严重 WIP Bubble\n- Actual WIP: 8,050\n- Target WIP: 258\n- Gap: +7,792 / +3020.16%\n- Queue WIP: 8,000 / 99.38%\n- Trend: 连续升高\n- Trigger Source: MES / BI / Planning\n\n### 本阶段结论\n- DNW-ANN Stage 已形成严重 WIP Bubble 异常发现记录。\n- 下一步应进入 Flow 02，确认数据刷新、指标口径、Target 有效性、异常持续时间和重复 Case 后再继续推进。\n\n### Agent 判断逻辑\n- Actual WIP 8,050 超过 Severe UCL 516。\n- Queue WIP 占比 99.38%，说明当前堆积主要发生在等待队列。\n- Flow 01 只关闭异常发现，不输出最终根因或工单派发结论。\n\n### 状态与门禁\n- Next Flow: 02 异常确认\n- Gate: 等待 Case Owner / MFG / Shift 确认进入下一流程\n\n### 关键证据\n- DNW-ANN Stage 是当前最高 WIP 对象。\n- Actual WIP 与 Target WIP 差值 +7,792。\n- Queue WIP 8,000，占 Actual WIP 99.38%。\n",
+  "content": {
+    "title": "01 异常发现",
+    "containers": [
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {"label": "Case ID", "value": "CASE-WIP-DNW-ANN-001"},
+              {"label": "Priority", "value": "P1"},
+              {"label": "Object", "value": "DNW-ANN Stage"},
+              {"label": "Case Type", "value": "严重 WIP Bubble"},
+              {"label": "Occur Time", "value": "2026-04-07 15:45:26"},
+              {"label": "Operator", "value": "Wang Fei"},
+              {"label": "Current Stage", "value": "01 异常发现"},
+              {"label": "Case Age", "value": "3.5h"},
+              {"label": "Stage Elapsed", "value": "22min"},
+              {"label": "SLA Remaining", "value": "18min"},
+              {"label": "Owner", "value": "MFG / Case Owner"},
+              {"label": "Status", "value": "Processing"}
+            ]
+          },
+          {
+            "title": "Case Risk Snapshot｜异常发生时（风险快照）",
+            "items": [
+              {"label": "WIP", "value": "Actual 8,050 / Target 258", "tone": "risk"},
+              {"label": "Queue", "value": "8,000 / 99.38%", "tone": "risk"},
+              {"label": "Eligible Tool", "value": "2 / 8", "meta": "92% Tool Uptime"},
+              {"label": "Move-Out", "value": "73% Plan", "meta": "Gap -320"},
+              {"label": "Q-Time", "value": "High", "meta": "Min Remain 1.8h", "tone": "warn"},
+              {"label": "Downstream", "value": "Next Stage = PW-PH", "meta": "Status = Starvation", "tone": "warn"}
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {"title": "系统 / 用户触发", "items": ["系统检测到 DNW-ANN Stage Actual WIP 明显高于 Target WIP，已自动触发 Flow 01 异常发现。"]},
+          {"title": "Agent 接管", "items": ["我先接管异常发现环节，重点确认最高 WIP 对象、Target 口径和是否达到 WIP Bubble 触发条件。"]},
+          {"title": "Agent 思考过程", "items": ["当前阶段只判断是否形成异常发现记录；根因还需要后续 Flow 02 做口径校验和现场状态确认。"]},
+          {"title": "Agent 分析计划", "items": ["读取当前最高 WIP stage 原始记录。", "对比 Actual WIP、Target WIP 与 Severe UCL。", "查看 Queue 是否主导 WIP 堆积。", "汇总风险快照并判断是否进入 Flow 02。"]},
+          {"title": "数据 / 工具调用", "items": [{"label": "MES / WIP Profile", "value": "Actual WIP = 8,050", "status": "Done"}, {"label": "Planning Config", "value": "Target WIP = 258", "status": "Done"}, {"label": "BI Trend", "value": "WIP 连续升高", "status": "Done"}]},
+          {"title": "Agent 观察结果", "items": ["DNW-ANN Stage Actual WIP 为 8,050，Target WIP 为 258。", "WIP Gap 为 +7,792，约为 Target 的 31.2 倍。", "Queue WIP 为 8,000，占 Actual WIP 99.38%，堆积主要集中在等待队列侧。"]},
+          {"title": "Agent 分析判断", "items": ["Actual WIP 已高于 Severe UCL，且 Queue 占比接近全部 WIP，因此满足严重 WIP Bubble 的发现条件；但 Flow 01 不能直接判定最终根因。"]},
+          {"title": "Agent 阶段输出", "items": ["已生成 DNW-ANN Stage 的严重 WIP Bubble 异常发现记录，建议进入 Flow 02 异常确认。"]},
+          {"title": "AI Agent", "items": ["是否确认进入 02 异常确认？下一阶段只校验数据刷新、指标口径、Target 有效性、异常持续时间和重复 Case。"]}
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {"title": "业务结果", "items": [
+            {"label": "Bubble Status", "value": "严重 WIP Bubble", "tone": "risk"},
+            {"label": "Actual WIP", "value": "8,050"},
+            {"label": "Target WIP", "value": "258"},
+            {"label": "Gap", "value": "+7,792 / +3020.16%", "tone": "risk"},
+            {"label": "Queue WIP", "value": "8,000 / 99.38%", "tone": "risk"},
+            {"label": "Trend", "value": "连续升高"},
+            {"label": "Trigger Source", "value": "MES / BI / Planning"}
+          ]},
+          {"title": "本阶段结论", "items": ["DNW-ANN Stage 已形成严重 WIP Bubble 异常发现记录。", "下一步应进入 Flow 02，确认数据刷新、指标口径、Target 有效性、异常持续时间和重复 Case 后再继续推进。"]},
+          {"title": "Agent 判断逻辑", "items": ["Actual WIP 8,050 超过 Severe UCL 516。", "Queue WIP 占比 99.38%，说明当前堆积主要发生在等待队列。", "Flow 01 只关闭异常发现，不输出最终根因或工单派发结论。"]},
+          {"title": "状态与门禁", "items": ["Next Flow: 02 异常确认", "Gate: 等待 Case Owner / MFG / Shift 确认进入下一流程"]},
+          {"title": "关键证据", "items": ["DNW-ANN Stage 是当前最高 WIP 对象。", "Actual WIP 与 Target WIP 差值 +7,792。", "Queue WIP 8,000，占 Actual WIP 99.38%。"]}
+        ]
+      }
+    ]
+  }
+}
+
+
+
+
+
+
+
+

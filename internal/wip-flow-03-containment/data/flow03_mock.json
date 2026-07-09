@@ -1,0 +1,29 @@
+{
+  "hot_lot_protection": {
+    "hot_lot_count": 2,
+    "super_hot_run_count": 3,
+    "priority_rule": "Hot Lot / Super Hot Run 保持最高优先级，不因局部控制被降级"
+  },
+  "move_in_control": {
+    "recommendation": "限制非关键 Product / Lot 的新增 Move-In",
+    "control_window": "2h",
+    "scope": "非关键 Product / 非紧急 WO",
+    "owner": "MFG / PC"
+  },
+  "downstream_notice": {
+    "target": "从前序 Downstream / Next Stage 继承",
+    "risk": "Starvation Risk",
+    "action": "通知前序 Downstream / Next Stage 对应站点关注供料节奏与优先级保护"
+  },
+  "hold_recommendation": {
+    "status": "不建议全量 Hold",
+    "reason": "全量 Hold 会扩大生产影响，当前优先采用局部、可控、可回退措施"
+  },
+  "dispatch_draft": {
+    "status": "待确认",
+    "suggestion": "准备 Dispatch 权重调整草案，保护 Hot Lot / Super Hot Run，并等待 MFG / Shift / Area Owner 确认"
+  },
+  "rollback_condition": {
+    "condition": "若 Q-Time 风险扩大、下游供料继续恶化或人工门禁未通过，则回退临时控制并升级人工确认"
+  }
+}

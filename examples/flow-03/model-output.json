@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "case_id": "CASE-WIP-DNW-ANN-001",
+  "flow_no": "03",
+  "flow_name": "临时措施",
+  "flow_status": "Closed",
+  "case_status": "Processing",
+  "next_flow_no": "04",
+  "next_flow_name": "影响范围评估",
+  "containment_status": "临时措施已生成",
+  "text": "# 03 临时措施\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: CASE-WIP-DNW-ANN-001\n- Priority: P1\n- Object: DNW-ANN Stage\n- Case Type: 严重 WIP Bubble\n- Occur Time: 2026-04-07 15:45:26\n- Operator: Wang Fei\n- Current Stage: 03 临时措施\n- Case Age: 3.5h\n- Stage Elapsed: 22min\n- SLA Remaining: 18min\n- Owner: MFG / Case Owner\n- Status: Processing\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- WIP: Actual 8,050 / Target 258\n- Queue: 8,000 / 99.4%\n- Eligible Tool: 2 / 8；92% Tool Uptime\n- Move-Out: 73% Plan；Gap -320\n- Q-Time: High；Min Remain 1.8h\n- Downstream: Next Stage = PW-PH；Status = Starvation\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 02 已确认 DNW-ANN Stage 的严重 WIP Bubble 异常成立，当前进入 Flow 03 临时措施，先控制生产风险并防止影响扩大。\n\n### Agent 接管\n我已接管临时措施环节，优先保护 Hot Lot / Super Hot Run，控制非关键 Move-In，提醒下游供料风险，并评估是否需要 Hold。\n\n### Agent 思考过程\n当前不能等待最终根因完全确认后再处理。临时措施要先保护高优先级批次和下游供给，同时避免把局部 WIP 问题扩大成全线停滞。\n\n### Agent 分析计划\n- 复用前序 WIP Case Snapshot 和异常确认结果。\n- 查询 Hot Lot / Super Hot Run 风险对象。\n- 判断是否需要限制非关键 Product / Lot 的新增 Move-In。\n- 检查下游 Starvation 风险并生成通知建议。\n- 判断是否需要全量 Hold，并设定回退条件。\n\n### 数据 / 工具调用\n- Hot Lot Query: Hot Lot = 2，Super Hot Run = 3 [Done]\n- Move-In Check: 建议限制非关键 Product / Lot 的新增 Move-In，控制窗口 2h [Done]\n- Downstream Risk Check: PW-PH 存在 Starvation Risk，需要通知下游 Shift 关注供料节奏 [Done]\n- Hold Recommendation: 不建议全量 Hold，优先采用局部、可控、可回退措施 [Done]\n\n### Agent 观察结果\n- 当前存在 2 批 Hot Lot 和 3 批 Super Hot Run，需要保持最高优先级。\n- 非关键 Product / Lot 的新增 Move-In 会继续放大 DNW-ANN 的 Queue 堆积，建议临时限制 2h。\n- 下游 PW-PH 已出现 Starvation 风险，需要提前通知下游 Shift 关注供料节奏。\n- 当前没有证据支持无差别全量 Hold；全量 Hold 反而可能扩大生产影响。\n\n### Agent 分析判断\n本阶段应采用局部、可控、可回退的临时措施：保护 Hot Lot / Super Hot Run，限制非关键 Move-In，通知下游风险，并准备 Dispatch 权重调整草案等待人工确认。这里不判断最终根因，也不直接修改生产主系统。\n\n### Agent 阶段输出\nFlow 03 已生成临时风险控制建议，Case 保持 Processing，可在确认措施执行后进入 Flow 04 影响范围评估。\n\n### AI Agent\n是否确认临时措施已执行并进入 04 影响范围评估？下一阶段将量化 Lot、WO、Q-Time、Move-Out 和下游供料影响。\n\n## 当前阶段结果\n### 业务结果\n- Containment Status: 临时措施已生成\n- Hot Lot Protection: Hot Lot = 2，Super Hot Run = 3，保持最高优先级\n- Move-In Control: 非关键 Product / Lot 新增 Move-In 建议限制 2h\n- Downstream Notice: 通知 PW-PH / 下游 Shift 关注 Starvation Risk\n- Hold Recommendation: 不建议全量 Hold\n- Rollback Condition: Q-Time 风险扩大、下游供料继续恶化或人工门禁未通过时回退并升级确认\n\n### 本阶段结论\n- 当前应先控风险，不等待最终根因确认后才行动。\n- 临时措施采用局部控制，不触发无差别全量 Hold。\n- 所有高风险动作保持人工确认和可回退边界。\n\n### Agent 判断逻辑\n- Hot Lot / Super Hot Run 已存在，必须优先保护。\n- DNW-ANN Queue 已严重堆积，继续放入非关键 Lot 会扩大 Bubble。\n- 下游 Starvation Risk 已出现，需要提前通知并协调供料节奏。\n- 全量 Hold 会扩大生产影响，当前不符合最小必要原则。\n\n### 状态与门禁\n- Next Flow: 04 影响范围评估\n- Gate: 确认临时措施已执行并进入影响范围评估\n\n### 关键证据\n- Hot Lot Query = 2；Super Hot Run = 3。\n- Move-In Check = 建议限制非关键 Product / Lot，控制窗口 2h。\n- Downstream Risk Check = PW-PH Starvation Risk。\n- Hold Recommendation = 不建议全量 Hold。\n- Rollback Condition = Q-Time 风险扩大、下游恶化或人工门禁未通过。",
+  "content": {
+    "title": "03 临时措施",
+    "containers": [
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {"label": "Case ID", "value": "CASE-WIP-DNW-ANN-001"},
+              {"label": "Priority", "value": "P1"},
+              {"label": "Object", "value": "DNW-ANN Stage"},
+              {"label": "Case Type", "value": "严重 WIP Bubble"},
+              {"label": "Occur Time", "value": "2026-04-07 15:45:26"},
+              {"label": "Operator", "value": "Wang Fei"},
+              {"label": "Current Stage", "value": "03 临时措施"},
+              {"label": "Case Age", "value": "3.5h"},
+              {"label": "Stage Elapsed", "value": "22min"},
+              {"label": "SLA Remaining", "value": "18min"},
+              {"label": "Owner", "value": "MFG / Case Owner"},
+              {"label": "Status", "value": "Processing"}
+            ]
+          },
+          {
+            "title": "Case Risk Snapshot｜异常发生时（风险快照）",
+            "items": [
+              {"label": "WIP", "value": "Actual 8,050 / Target 258", "tone": "risk"},
+              {"label": "Queue", "value": "8,000 / 99.4%", "tone": "risk"},
+              {"label": "Eligible Tool", "value": "2 / 8", "meta": "92% Tool Uptime", "tone": "warn"},
+              {"label": "Move-Out", "value": "73% Plan", "meta": "Gap -320", "tone": "warn"},
+              {"label": "Q-Time", "value": "High", "meta": "Min Remain 1.8h", "tone": "risk"},
+              {"label": "Downstream", "value": "Next Stage = PW-PH", "meta": "Status = Starvation", "tone": "risk"}
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {"title": "系统 / 用户触发", "items": ["Flow 02 已确认 DNW-ANN Stage 的严重 WIP Bubble 异常成立，当前进入 Flow 03 临时措施，先控制生产风险并防止影响扩大。"]},
+          {"title": "Agent 接管", "items": ["我已接管临时措施环节，优先保护 Hot Lot / Super Hot Run，控制非关键 Move-In，提醒下游供料风险，并评估是否需要 Hold。"]},
+          {"title": "Agent 思考过程", "items": ["当前不能等待最终根因完全确认后再处理。临时措施要先保护高优先级批次和下游供给，同时避免把局部 WIP 问题扩大成全线停滞。"]},
+          {"title": "Agent 分析计划", "items": ["复用前序 WIP Case Snapshot 和异常确认结果。", "查询 Hot Lot / Super Hot Run 风险对象。", "判断是否需要限制非关键 Product / Lot 的新增 Move-In。", "检查下游 Starvation 风险并生成通知建议。", "判断是否需要全量 Hold，并设定回退条件。"]},
+          {"title": "数据 / 工具调用", "items": [
+            {"label": "Hot Lot Query", "value": "Hot Lot = 2，Super Hot Run = 3", "status": "Done"},
+            {"label": "Move-In Check", "value": "建议限制非关键 Product / Lot 的新增 Move-In，控制窗口 2h", "status": "Done"},
+            {"label": "Downstream Risk Check", "value": "PW-PH 存在 Starvation Risk，需要通知下游 Shift 关注供料节奏", "status": "Done"},
+            {"label": "Hold Recommendation", "value": "不建议全量 Hold，优先采用局部、可控、可回退措施", "status": "Done"}
+          ]},
+          {"title": "Agent 观察结果", "items": ["当前存在 2 批 Hot Lot 和 3 批 Super Hot Run，需要保持最高优先级。", "非关键 Product / Lot 的新增 Move-In 会继续放大 DNW-ANN 的 Queue 堆积，建议临时限制 2h。", "下游 PW-PH 已出现 Starvation 风险，需要提前通知下游 Shift 关注供料节奏。", "当前没有证据支持无差别全量 Hold；全量 Hold 反而可能扩大生产影响。"]},
+          {"title": "Agent 分析判断", "items": ["本阶段应采用局部、可控、可回退的临时措施：保护 Hot Lot / Super Hot Run，限制非关键 Move-In，通知下游风险，并准备 Dispatch 权重调整草案等待人工确认。", "这里不判断最终根因，也不直接修改生产主系统。"]},
+          {"title": "Agent 阶段输出", "items": ["Flow 03 已生成临时风险控制建议，Case 保持 Processing，可在确认措施执行后进入 Flow 04 影响范围评估。"]},
+          {"title": "AI Agent", "items": ["是否确认临时措施已执行并进入 04 影响范围评估？下一阶段将量化 Lot、WO、Q-Time、Move-Out 和下游供料影响。"]}
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {"title": "业务结果", "items": [
+            {"label": "Containment Status", "value": "临时措施已生成"},
+            {"label": "Hot Lot Protection", "value": "Hot Lot = 2，Super Hot Run = 3，保持最高优先级"},
+            {"label": "Move-In Control", "value": "非关键 Product / Lot 新增 Move-In 建议限制 2h"},
+            {"label": "Downstream Notice", "value": "通知 PW-PH / 下游 Shift 关注 Starvation Risk"},
+            {"label": "Hold Recommendation", "value": "不建议全量 Hold"},
+            {"label": "Rollback Condition", "value": "Q-Time 风险扩大、下游供料继续恶化或人工门禁未通过时回退并升级确认"}
+          ]},
+          {"title": "本阶段结论", "items": ["当前应先控风险，不等待最终根因确认后才行动。", "临时措施采用局部控制，不触发无差别全量 Hold。", "所有高风险动作保持人工确认和可回退边界。"]},
+          {"title": "Agent 判断逻辑", "items": ["Hot Lot / Super Hot Run 已存在，必须优先保护。", "DNW-ANN Queue 已严重堆积，继续放入非关键 Lot 会扩大 Bubble。", "下游 Starvation Risk 已出现，需要提前通知并协调供料节奏。", "全量 Hold 会扩大生产影响，当前不符合最小必要原则。"]},
+          {"title": "状态与门禁", "items": ["Next Flow: 04 影响范围评估", "Gate: 确认临时措施已执行并进入影响范围评估"]},
+          {"title": "关键证据", "items": ["Hot Lot Query = 2；Super Hot Run = 3。", "Move-In Check = 建议限制非关键 Product / Lot，控制窗口 2h。", "Downstream Risk Check = PW-PH Starvation Risk。", "Hold Recommendation = 不建议全量 Hold。", "Rollback Condition = Q-Time 风险扩大、下游恶化或人工门禁未通过。"]}
+        ]
+      }
+    ]
+  }
+}

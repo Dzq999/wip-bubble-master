@@ -1,0 +1,22 @@
+{
+  "impact_scope": {
+    "impact_lot": "42",
+    "impact_wo": "18",
+    "hot_lot": "2",
+    "super_hot_run": "3"
+  },
+  "qtime_impact": {
+    "q_time_risk": "High"
+  },
+  "move_out_impact": {
+    "gap": "-320 wafers"
+  },
+  "downstream_supply": {
+    "stage_name": "从前序 Downstream / Next Stage 继承",
+    "status": "Starvation"
+  },
+  "assessment_gate": {
+    "status": "影响范围已评估",
+    "next_step": "进入 Flow 05 Case 分级与处置判定"
+  }
+}

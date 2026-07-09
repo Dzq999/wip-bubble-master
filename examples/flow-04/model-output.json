@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "case_id": "CASE-WIP-DNW-ANN-001",
+  "flow_no": "04",
+  "flow_name": "影响范围评估",
+  "flow_status": "Closed",
+  "case_status": "Processing",
+  "next_flow_no": "05",
+  "next_flow_name": "Case 分级与处置判定",
+  "impact_assessment_status": "影响范围已评估",
+  "text": "# 04 影响范围评估\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: CASE-WIP-DNW-ANN-001\n- Priority: P1\n- Object: DNW-ANN Stage\n- Case Type: 严重 WIP Bubble\n- Occur Time: 2026-04-07 15:45:26\n- Operator: Wang Fei\n- Current Stage: 04 影响范围评估\n- Case Age: 3.5h\n- Stage Elapsed: 22min\n- SLA Remaining: 18min\n- Owner: MFG / Case Owner\n- Status: Processing\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- WIP: Actual 8,050 / Target 258\n- Queue: 8,000 / 99.4%\n- Eligible Tool: 2 / 8；92% Tool Uptime\n- Move-Out: 73% Plan；Gap -320\n- Q-Time: High；Min Remain 1.8h\n- Downstream: Next Stage = PW-PH；Status = Starvation\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 03 已生成 DNW-ANN 的临时风险控制建议，现在进入 Flow 04 影响范围评估，基于已有前端 demo 指标确认影响是否超过单点波动。\n\n### Agent 接管\n我接管影响范围评估环节，聚焦 Impact Lot、Impact WO、Hot Lot / Super Hot Run、Q-Time、Move-Out Gap 和下游供料风险。\n\n### Agent 思考过程\n当前不能引入前端 demo 没有的数据项；本阶段只用已有指标判断异常是否仍局限在当前 stage，还是已经影响批次、工单、优先级、Move-Out 和下游供料。\n\n### Agent 分析计划\n- 复用前序 WIP Case Snapshot 和 Flow 03 临时措施结果。\n- 检查 Impact Lot / Impact WO 范围。\n- 检查 Hot Lot / Super Hot Run 是否受到影响。\n- 检查 Q-Time Risk、Move-Out Gap 和下游 Starvation。\n- 判断是否满足进入 Flow 05 Case 分级与处置判定的条件。\n\n### 数据 / 工具调用\n- Lot Impact: Impact Lot = 42，Impact WO = 18 [Done]\n- Priority Lot: Hot Lot = 2，Super Hot Run = 3 [Done]\n- Q-Time Impact: Risk = High [Done]\n- Move-Out Impact: Gap = -320 wafers [Done]\n- Downstream Supply: Stage = PW-PH，Status = Starvation [Done]\n\n### Agent 观察结果\n- Impact Lot 为 42，Impact WO 为 18，影响范围已经不只是单一批次。\n- Hot Lot 2 批、Super Hot Run 3 批处于影响范围内，需要继续保护优先级。\n- Q-Time Risk 为 High，说明时间窗风险仍需要重点关注。\n- Move-Out Gap 为 -320 wafers，说明当前排出节奏存在缺口。\n- 下游 PW-PH 处于 Starvation 状态，供料风险已经传导到下游。\n\n### Agent 分析判断\n基于现有前端 demo 指标，本次 WIP Bubble 已影响 Lot、WO、Hot Lot / Super Hot Run、Q-Time、Move-Out 和下游供料，影响范围超过单点波动；但本阶段仍只做影响范围评估，不输出正式 Case 等级或最终根因。\n\n### Agent 阶段输出\nFlow 04 已完成影响范围评估，Case 保持 Processing，可进入 Flow 05 Case 分级与处置判定。\n\n### AI Agent\n是否确认进入 05 Case 分级与处置判定？下一阶段将基于当前已有影响范围判断 Case 等级、处置路径和初始主责。\n\n## 当前阶段结果\n### 业务结果\n- Impact Assessment Status: 影响范围已评估\n- Impact Scope: 42 Lot / 18 WO\n- Priority Lot: Hot Lot = 2，Super Hot Run = 3\n- Q-Time Impact: High\n- Move-Out Impact: Gap -320 wafers\n- Downstream Impact: PW-PH Starvation\n- Spread Assessment: 超过单点波动\n\n### 本阶段结论\n- DNW-ANN 的影响已超出单个 Stage 内部波动，需要进入分级与处置判定。\n- 临时措施仍应保持，后续基于已有影响指标确定 Case 等级和处置路径。\n\n### Agent 判断逻辑\n- Impact Lot 和 Impact WO 已形成明确影响范围。\n- Hot Lot / Super Hot Run、Q-Time High 和 Move-Out Gap 同时存在，说明生产风险不是单一指标波动。\n- 下游 PW-PH 已出现 Starvation，说明供料风险已经向下游传导。\n- Flow 04 只输出影响范围依据，不直接判定正式 Case 等级。\n\n### 状态与门禁\n- Next Flow: 05 Case 分级与处置判定\n- Gate: 确认影响范围后进入 Case 分级\n\n### 关键证据\n- Impact Lot = 42，Impact WO = 18。\n- Hot Lot = 2，Super Hot Run = 3。\n- Q-Time Risk = High。\n- Move-Out Gap = -320 wafers。\n- Downstream PW-PH Status = Starvation。\n",
+  "content": {
+    "title": "04 影响范围评估",
+    "containers": [
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {"label": "Case ID", "value": "CASE-WIP-DNW-ANN-001"},
+              {"label": "Priority", "value": "P1"},
+              {"label": "Object", "value": "DNW-ANN Stage"},
+              {"label": "Case Type", "value": "严重 WIP Bubble"},
+              {"label": "Occur Time", "value": "2026-04-07 15:45:26"},
+              {"label": "Operator", "value": "Wang Fei"},
+              {"label": "Current Stage", "value": "04 影响范围评估"},
+              {"label": "Case Age", "value": "3.5h"},
+              {"label": "Stage Elapsed", "value": "22min"},
+              {"label": "SLA Remaining", "value": "18min"},
+              {"label": "Owner", "value": "MFG / Case Owner"},
+              {"label": "Status", "value": "Processing"}
+            ]
+          },
+          {
+            "title": "Case Risk Snapshot｜异常发生时（风险快照）",
+            "items": [
+              {"label": "WIP", "value": "Actual 8,050 / Target 258", "tone": "risk"},
+              {"label": "Queue", "value": "8,000 / 99.4%", "tone": "risk"},
+              {"label": "Eligible Tool", "value": "2 / 8", "meta": "92% Tool Uptime", "tone": "warn"},
+              {"label": "Move-Out", "value": "73% Plan", "meta": "Gap -320", "tone": "warn"},
+              {"label": "Q-Time", "value": "High", "meta": "Min Remain 1.8h", "tone": "risk"},
+              {"label": "Downstream", "value": "Next Stage = PW-PH", "meta": "Status = Starvation", "tone": "risk"}
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {"title": "系统 / 用户触发", "items": ["Flow 03 已生成 DNW-ANN 的临时风险控制建议，现在进入 Flow 04 影响范围评估。"]},
+          {"title": "Agent 接管", "items": ["我接管影响范围评估环节，聚焦 Impact Lot、Impact WO、Hot Lot / Super Hot Run、Q-Time、Move-Out Gap 和下游供料风险。"]},
+          {"title": "Agent 思考过程", "items": ["当前只使用前端 demo 已有字段，不引入前端 demo 没有的额外指标。"]},
+          {"title": "Agent 分析计划", "items": ["复用前序 WIP Case Snapshot 和临时措施结果。", "检查 Impact Lot / Impact WO。", "检查 Hot Lot / Super Hot Run。", "检查 Q-Time Risk、Move-Out Gap 和下游 Starvation。", "判断是否超过单点波动。"]},
+          {"title": "数据 / 工具调用", "items": [
+            {"label": "Lot Impact", "value": "Impact Lot = 42，Impact WO = 18", "status": "Done"},
+            {"label": "Priority Lot", "value": "Hot Lot = 2，Super Hot Run = 3", "status": "Done"},
+            {"label": "Q-Time Impact", "value": "Risk = High", "status": "Done"},
+            {"label": "Move-Out Impact", "value": "Gap = -320 wafers", "status": "Done"},
+            {"label": "Downstream Supply", "value": "Stage = PW-PH，Status = Starvation", "status": "Done"}
+          ]},
+          {"title": "Agent 观察结果", "items": ["Impact Lot 为 42，Impact WO 为 18。", "Hot Lot 2 批、Super Hot Run 3 批处于影响范围内。", "Q-Time Risk 为 High。", "Move-Out Gap 为 -320 wafers。", "下游 PW-PH 处于 Starvation 状态。"]},
+          {"title": "Agent 分析判断", "items": ["基于已有前端 demo 指标，影响范围超过单点波动；本阶段不输出正式 Case 等级。"]},
+          {"title": "Agent 阶段输出", "items": ["Flow 04 已完成影响范围评估，Case 保持 Processing，可进入 Flow 05 Case 分级与处置判定。"]},
+          {"title": "AI Agent", "items": ["是否确认进入 05 Case 分级与处置判定？下一阶段将判断 Case 等级、处置路径和初始主责。"]}
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {"title": "业务结果", "items": [
+            {"label": "Impact Assessment Status", "value": "影响范围已评估"},
+            {"label": "Impact Scope", "value": "42 Lot / 18 WO"},
+            {"label": "Priority Lot", "value": "Hot Lot = 2，Super Hot Run = 3"},
+            {"label": "Q-Time Impact", "value": "High"},
+            {"label": "Move-Out Impact", "value": "Gap -320 wafers"},
+            {"label": "Downstream Impact", "value": "PW-PH Starvation"},
+            {"label": "Spread Assessment", "value": "超过单点波动"}
+          ]},
+          {"title": "本阶段结论", "items": ["DNW-ANN 的影响已超出单个 Stage 内部波动，需要进入分级与处置判定。", "临时措施仍应保持，后续基于已有影响指标确定 Case 等级和处置路径。"]},
+          {"title": "Agent 判断逻辑", "items": ["Impact Lot 和 Impact WO 已形成明确影响范围。", "Hot Lot / Super Hot Run、Q-Time High 和 Move-Out Gap 同时存在。", "下游 PW-PH 已出现 Starvation。", "Flow 04 只输出影响范围依据，不直接判定正式 Case 等级。"]},
+          {"title": "状态与门禁", "items": ["Next Flow: 05 Case 分级与处置判定", "Gate: 确认影响范围后进入 Case 分级"]},
+          {"title": "关键证据", "items": ["Impact Lot = 42，Impact WO = 18。", "Hot Lot = 2，Super Hot Run = 3。", "Q-Time Risk = High。", "Move-Out Gap = -320 wafers。", "Downstream PW-PH Status = Starvation。"]}
+        ]
+      }
+    ]
+  }
+}
