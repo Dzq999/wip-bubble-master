@@ -40,7 +40,8 @@ prompts/flow03_result_prompt.md
 ## 数据来源
 
 - 一个或多个前序 Flow：从 `vfab_agent.fab_case_flow_record.flow_data_json` 中只提取 `content` 和少量流程元数据。
-- Flow 03 补充数据：仅补充 SQL 和前序 `content` 都没有的数据，如 Hot Lot / Super Hot Run 数量、Move-In 控制建议、Hold 建议、回退条件等；下游通知对象优先来自前序 Downstream / Next Stage。
+- Flow 03 SQL 数据：Hot Lot / Super Hot Run 数量来自 `locate_flow03_priority_lots.sql`；下游 stage 与 starvation 来自 `locate_downstream_starvation.sql`。如果本地 `aifab` 表或 demo 数据缺失，数据层会补齐最小可运行数据。
+- Flow 03 补充数据：仅补充 SQL 和前序 `content` 都没有的数据，如 Move-In 控制建议、Hold 建议、回退条件等；下游通知对象优先来自 SQL 查询结果，SQL 无结果时继承前序 Downstream / Next Stage。
 - 后续 Flow 04 才量化影响范围；Flow 03 只输出短期风险控制动作和门禁。
 
 ## 脚本调用

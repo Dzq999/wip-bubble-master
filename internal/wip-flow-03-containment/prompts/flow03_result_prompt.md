@@ -7,7 +7,7 @@
 - Flow 03 只做短期风险控制，不做最终根因排查，不做影响范围量化，不生成正式工程问题包。
 - 优先使用 `previous_flows[].content` 与 WIP Case Snapshot；不要依赖前序全文 `text`。
 - 前端或用户触发语不能写成“用户问了什么”，要写成 Flow 02 已确认异常成立后进入临时措施。
-- 如果前序 content 拿不到字段，再使用 `flow03_inputs`；SQL 和补充输入都没有则省略。
+- Hot Lot / Super Hot Run 数量优先使用 `raw_inputs.sql_results.priority_lots`，下游对象与 starvation 优先使用 `raw_inputs.sql_results.downstream_starvation`；SQL 无结果时再使用前序 content 或 `flow03_inputs`。
 - 临时措施要表述为建议、通知、草案或待确认动作；不要写成 Agent 已直接操作生产主系统。
 - 最终可见内容禁止出现 `mock`、`model_context`、`prompt`、stdout。
 - 下游对象必须使用 `derived_context.downstream.stage_name` 或前序 `Downstream / Next Stage` 的实际值；例如前序为 `PW-PH` 时，下游对象必须仍是 `PW-PH`，不得写成泛化站点或班组名称。

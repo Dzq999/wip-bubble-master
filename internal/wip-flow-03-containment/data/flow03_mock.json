@@ -13,7 +13,7 @@
   "downstream_notice": {
     "target": "从前序 Downstream / Next Stage 继承",
     "risk": "Starvation Risk",
-    "action": "通知前序 Downstream / Next Stage 对应站点关注供料节奏与优先级保护"
+    "action": "通知下游 stage 关注供料节奏与优先级保护"
   },
   "hold_recommendation": {
     "status": "不建议全量 Hold",

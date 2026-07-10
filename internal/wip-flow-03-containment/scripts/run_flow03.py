@@ -23,7 +23,7 @@ FLOW_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 FLOW_MOCK_PATH = Path(__file__).resolve().parents[1] / "data" / "flow03_mock.json"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 
-from query_data import dumps, save_case_flow_record  # noqa: E402
+from query_data import dumps, locate_flow03_downstream_starvation, locate_flow03_priority_lots, save_case_flow_record  # noqa: E402
 
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
@@ -212,17 +212,113 @@ def derive_downstream_context(previous_flow_contents: list[Dict[str, Any]]) -> D
     return {}
 
 
+def normalize_stage_name(raw: Any) -> Optional[str]:
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    match = re.search(r"([A-Za-z0-9]+(?:-[A-Za-z0-9]+)+)", text)
+    if match:
+        return match.group(1).upper()
+    text = re.sub(r"\bStage\b", "", text, flags=re.IGNORECASE).strip(" ：:=;；,，")
+    return text.upper() if text else None
+
+
+def derive_current_stage_context(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+    preferred_labels = {"object", "current stage", "stage", "当前stage", "当前 stage", "当前站点", "对象"}
+    for summary in reversed(previous_flow_contents):
+        content = summary.get("content", {})
+        for item in iter_content_items(content):
+            label = str(item.get("label") or "").strip()
+            label_key = label.lower().replace("：", ":")
+            if "downstream" in label_key or "下游" in label:
+                continue
+            if label_key not in preferred_labels and not any(token in label_key for token in ("current stage", "object")):
+                continue
+            value = item.get("value")
+            stage_name = normalize_stage_name(value)
+            if stage_name:
+                return _drop_empty(
+                    {
+                        "stage_name": stage_name,
+                        "source_flow_no": summary.get("flow_no"),
+                        "source_flow_name": summary.get("flow_name"),
+                        "source_label": label,
+                        "source_value": value,
+                    }
+                )
+    return {"stage_name": "DNW-ANN", "source": "default_demo_stage"}
+
+
+def summarize_priority_lots(rows: list[Dict[str, Any]]) -> Dict[str, int]:
+    summary = {"hot_lot_count": 0, "super_hot_run_count": 0}
+    for row in rows:
+        priority = str(row.get("priority") or "").strip().lower()
+        count = int(row.get("lot_count") or 0)
+        if priority == "hot lot":
+            summary["hot_lot_count"] += count
+        elif priority in {"super hot lot", "super hot run"}:
+            summary["super_hot_run_count"] += count
+    return summary
+
+
 def build_flow03_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
     flow03_inputs = load_flow_mock()
-    downstream_context = derive_downstream_context(previous_flow_contents)
+    current_stage_context = derive_current_stage_context(previous_flow_contents)
+    current_stage = current_stage_context.get("stage_name") or "DNW-ANN"
+    previous_downstream_context = derive_downstream_context(previous_flow_contents)
+    downstream_context = dict(previous_downstream_context)
+    sql_results: Dict[str, Any] = {
+        "stage_name": current_stage,
+        "priority_lots": [],
+        "downstream_starvation": None,
+        "query_errors": [],
+    }
+
+    try:
+        priority_rows = locate_flow03_priority_lots(current_stage)
+        sql_results["priority_lots"] = priority_rows
+        priority_summary = summarize_priority_lots(priority_rows)
+        hot_lot_protection = flow03_inputs.setdefault("hot_lot_protection", {})
+        hot_lot_protection["hot_lot_count"] = priority_summary["hot_lot_count"]
+        hot_lot_protection["super_hot_run_count"] = priority_summary["super_hot_run_count"]
+        hot_lot_protection["source"] = "sql.locate_flow03_priority_lots"
+    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
+        sql_results["query_errors"].append({"query": "locate_flow03_priority_lots", "error": str(exc)})
+
+    try:
+        downstream_row = locate_flow03_downstream_starvation(current_stage)
+        sql_results["downstream_starvation"] = downstream_row
+        if downstream_row:
+            sql_stage = normalize_stage_name(downstream_row.get("next_stage_name"))
+            if sql_stage:
+                downstream_context = _drop_empty(
+                    {
+                        "stage_name": sql_stage,
+                        "status": downstream_row.get("if_starved"),
+                        "actual_wip": downstream_row.get("actual_wip"),
+                        "target_wip": downstream_row.get("target_wip"),
+                        "wip_ratio": downstream_row.get("wip_ratio"),
+                        "source": "sql.locate_downstream_starvation",
+                        "previous_source": previous_downstream_context,
+                    }
+                )
+    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
+        sql_results["query_errors"].append({"query": "locate_downstream_starvation", "error": str(exc)})
+
     downstream_notice = flow03_inputs.get("downstream_notice")
     if isinstance(downstream_notice, dict):
         stage_name = downstream_context.get("stage_name")
         if stage_name:
             downstream_notice["target"] = stage_name
-        downstream_notice["target_source"] = "previous_flow_content.downstream"
-    return {"flow03_inputs": flow03_inputs, "derived_context": {"downstream": downstream_context}}
+        if downstream_context.get("status"):
+            downstream_notice["risk"] = downstream_context["status"]
+        downstream_notice["target_source"] = downstream_context.get("source") or "previous_flow_content.downstream"
 
+    return {
+        "flow03_inputs": flow03_inputs,
+        "derived_context": {"current_stage": current_stage_context, "downstream": downstream_context},
+        "sql_results": _drop_empty(sql_results),
+    }
 
 def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> Dict[str, Any]:
     previous_records = normalize_previous_records(previous_record)
@@ -241,7 +337,8 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "generation_rules": [
             "优先从 previous_flows[].content 获取 Case Header、风险快照、异常确认结论和门禁状态；不要读取或依赖前序全文 text。",
             "如果多个前序流程都提供 content，按 Flow 顺序综合使用；距离当前流程最近的内容优先。",
-            "下游对象必须优先使用 derived_context.downstream.stage_name；例如前序风险快照为 Next Stage = PW-PH 时，下游对象就是 PW-PH，禁止改写成与前序不一致的泛化对象。",
+            "Hot Lot / Super Hot Run 数量必须优先使用 raw_inputs.sql_results.priority_lots；没有 SQL 结果时才使用 flow03_inputs。",
+            "下游对象必须优先使用 raw_inputs.sql_results.downstream_starvation.next_stage_name；SQL 无结果时使用 derived_context.downstream.stage_name 或前序 Downstream / Next Stage 的实际值，禁止改写成泛化对象。",
             "Flow 03 只做临时风险遏制：Hot Lot / Super Hot Run 保护、非关键 Move-In 控制、下游通知和 Hold 建议。",
             "前序 content 和 SQL 都没有的数据才使用 flow03_inputs；仍缺失则省略。",
             "临时措施必须表述为局部、可控、可回退的建议、通知、草案或待确认动作。",

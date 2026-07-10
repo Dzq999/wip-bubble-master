@@ -54,6 +54,6 @@
 - `content.containers` 恰好 3 个。
 - `当前阶段对话.sections` 恰好 9 个。
 - `当前阶段结果.sections` 恰好 5 个。
-- `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
+- `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done；Hot Lot Query 与 Downstream Risk Check 优先来自 Flow 03 SQL 查询结果。
 - `Downstream Risk Check.value` 必须使用前序 `Downstream / Next Stage` 实际值；如果前序为 `PW-PH`，不得输出其他泛化对象。
 - 禁止输出 `frontend_payload`、`frontend_demo`、`model_context`、`case_snapshot`、`prompt`、`mock`。

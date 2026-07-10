@@ -42,6 +42,7 @@ internal/wip-data-query/sql/
 
 - `locate_high_wip_stage.sql`：从数仓定位当前 WIP 比例最高的业务 stage。
 - `locate_downstream_starvation.sql`：根据当前 stage 查询下游 `next_stage_name`，返回下游 `actual_wip`、`target_wip`、`wip_ratio` 和 `if_starved`，用于判断下游是否 Starvation。
+- `locate_flow03_priority_lots.sql`：按当前 stage 查询 Flow 03 使用的 Hot Lot / Super Hot Run 数量。
 - `get_latest_active_case.sql`：读取最新未关闭 case，可按 `case_id`、`current_flow_no` 或 `next_flow_no` 过滤。继续流程时优先用 `case_id + current_flow_no` 读取上一流程记录。
 - `get_case_record.sql`：按 `case_id` 读取流程运行态记录。
 - `update_case_flow_record.sql`：更新已有 case 的流程记录。
@@ -63,6 +64,7 @@ internal/wip-data-query/sql/
 ```bash
 python .agents/skills/wip-bubble-master/internal/wip-data-query/scripts/query_data.py locate_high_wip_stage
 python .agents/skills/wip-bubble-master/internal/wip-data-query/scripts/query_data.py locate_downstream_starvation --stage-name DNW-ANN
+python .agents/skills/wip-bubble-master/internal/wip-data-query/scripts/query_data.py locate_flow03_priority_lots --stage-name DNW-ANN
 python .agents/skills/wip-bubble-master/internal/wip-data-query/scripts/query_data.py get_latest_active_case --case-id <uuid> --current-flow-no 01
 python .agents/skills/wip-bubble-master/internal/wip-data-query/scripts/query_data.py get_case_record --case-id <uuid>
 ```

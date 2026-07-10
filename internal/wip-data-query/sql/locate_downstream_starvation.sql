@@ -1,4 +1,4 @@
-﻿SELECT
+SELECT
   next_stage_name,
   SUM(IF(
     lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold'),
@@ -17,7 +17,7 @@
       wafer_qty,
       0
     )) / NULLIF(MAX(plan_total_wip_qty), 0) <= 1 THEN 'Starvation'
-    ELSE 'Normal'
+    ELSE 'Need Further Review'
   END AS if_starved
 FROM (
   SELECT
