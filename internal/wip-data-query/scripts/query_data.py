@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from contextlib import contextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
@@ -19,6 +19,8 @@ SQL_FILES = {
     "locate_high_wip_stage",
     "locate_downstream_starvation",
     "locate_flow03_priority_lots",
+    "locate_flow04_impact_lot",
+    "locate_flow04_move_out_trend",
     "get_latest_active_case",
     "get_case_record",
     "get_case_flow_record",
@@ -326,6 +328,158 @@ def locate_flow03_priority_lots(stage_name: str, ensure_demo_data: bool = True) 
     return rows
 
 
+def _insert_move_out_history_rows(cursor: Any, stage_name: str, this_week_count: int = 12, last_week_count: int = 10) -> None:
+    cursor.execute("SHOW COLUMNS FROM aifab.dwd_wip_lot_step_his_rt")
+    existing_columns = {str(row.get("Field")) for row in cursor.fetchall()}
+    preferred_columns = ["lot_name", "stage_name", "step_in_time", "step_out_time", "last_updated_time"]
+    insert_columns = [column for column in preferred_columns if column in existing_columns]
+    now = datetime.now().replace(microsecond=0)
+    rows: list[tuple[Any, ...]] = []
+    for index in range(1, this_week_count + 1):
+        timestamp = now.replace(microsecond=0)
+        value_by_column = {
+            "lot_name": f"DEMO-MO-{stage_name}-TW-{index}",
+            "stage_name": stage_name,
+            "step_in_time": timestamp,
+            "step_out_time": timestamp,
+            "last_updated_time": timestamp,
+        }
+        rows.append(tuple(value_by_column[column] for column in insert_columns))
+    last_week_time = now - timedelta(days=10)
+    for index in range(1, last_week_count + 1):
+        value_by_column = {
+            "lot_name": f"DEMO-MO-{stage_name}-LW-{index}",
+            "stage_name": stage_name,
+            "step_in_time": last_week_time,
+            "step_out_time": last_week_time,
+            "last_updated_time": last_week_time,
+        }
+        rows.append(tuple(value_by_column[column] for column in insert_columns))
+    column_sql = ", ".join(insert_columns)
+    placeholder_sql = ", ".join(["%s"] * len(insert_columns))
+    cursor.executemany(
+        f"INSERT INTO aifab.dwd_wip_lot_step_his_rt ({column_sql}) VALUES ({placeholder_sql})",
+        rows,
+    )
+
+
+def ensure_flow04_demo_data(stage_name: str) -> Dict[str, Any]:
+    """Create the minimal local aifab demo tables/data used by Flow 04 when absent."""
+    current_stage = (stage_name or "DNW-ANN").strip() or "DNW-ANN"
+    seeded: list[str] = []
+    with connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("CREATE DATABASE IF NOT EXISTS aifab CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS aifab.dim_wip_lot_rt (
+                  stage_name VARCHAR(128) NOT NULL,
+                  priority INT NULL,
+                  lot_state VARCHAR(64) NULL,
+                  wafer_qty DECIMAL(18,4) DEFAULT 0,
+                  updated_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                  KEY idx_dim_wip_lot_rt_stage (stage_name),
+                  KEY idx_dim_wip_lot_rt_priority_state (priority, lot_state)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS aifab.dim_wip_target (
+                  stage_name VARCHAR(128) NOT NULL,
+                  target_wip DECIMAL(18,4) DEFAULT 0,
+                  KEY idx_dim_wip_target_stage (stage_name)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS aifab.dwd_wip_lot_step_his_rt (
+                  lot_name VARCHAR(64) NOT NULL,
+                  stage_name VARCHAR(128) NOT NULL,
+                  step_in_time DATETIME NULL,
+                  step_out_time DATETIME NULL,
+                  last_updated_time DATETIME NOT NULL,
+                  KEY idx_dwd_wip_lot_step_stage_time (stage_name, last_updated_time),
+                  KEY idx_dwd_wip_lot_step_lot (lot_name)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+
+            queue_count = _count_with_cursor(
+                cursor,
+                """
+                SELECT COUNT(1) AS cnt
+                FROM aifab.dim_wip_lot_rt
+                WHERE stage_name = %s
+                  AND lot_state IN ('wait', 'reserved', 'finished')
+                """,
+                (current_stage,),
+            )
+            if queue_count == 0:
+                _insert_wip_lot_rows(cursor, [(current_stage, 4, "wait", 25) for _ in range(50)])
+                seeded.append("dim_wip_lot_rt.flow04_queue")
+                queue_count = 50
+
+            target_count = _count_with_cursor(
+                cursor,
+                "SELECT COUNT(1) AS cnt FROM aifab.dim_wip_target WHERE stage_name = %s",
+                (current_stage,),
+            )
+            if target_count == 0:
+                target_wip = max((queue_count - 42) * 25, 25)
+                cursor.execute(
+                    "INSERT INTO aifab.dim_wip_target (stage_name, target_wip) VALUES (%s, %s)",
+                    (current_stage, target_wip),
+                )
+                seeded.append("dim_wip_target.flow04_stage_target")
+
+            move_out_count = _count_with_cursor(
+                cursor,
+                """
+                SELECT COUNT(1) AS cnt
+                FROM aifab.dwd_wip_lot_step_his_rt
+                WHERE stage_name = %s
+                  AND step_out_time IS NOT NULL
+                  AND last_updated_time >= CURRENT_TIMESTAMP - INTERVAL 2 WEEK
+                """,
+                (current_stage,),
+            )
+            if move_out_count == 0:
+                _insert_move_out_history_rows(cursor, current_stage)
+                seeded.append("dwd_wip_lot_step_his_rt.move_out_history")
+    return {"stage_name": current_stage, "seeded": seeded}
+
+
+def locate_flow04_impact_lot(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    """Return Flow 04 impact lot count, seeding local demo data if absent."""
+    try:
+        row = fetch_one(load_sql("locate_flow04_impact_lot"), (stage_name,))
+    except Exception:
+        if not ensure_demo_data:
+            raise
+        ensure_flow04_demo_data(stage_name)
+        row = fetch_one(load_sql("locate_flow04_impact_lot"), (stage_name,))
+    if ensure_demo_data and (not row or row.get("impact_lot_count") is None):
+        ensure_flow04_demo_data(stage_name)
+        row = fetch_one(load_sql("locate_flow04_impact_lot"), (stage_name,))
+    return row
+
+
+def locate_flow04_move_out_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    """Return Flow 04 week-over-week move-out trend, seeding local demo data if absent."""
+    try:
+        row = fetch_one(load_sql("locate_flow04_move_out_trend"), (stage_name, stage_name))
+    except Exception:
+        if not ensure_demo_data:
+            raise
+        ensure_flow04_demo_data(stage_name)
+        row = fetch_one(load_sql("locate_flow04_move_out_trend"), (stage_name, stage_name))
+    if ensure_demo_data and (not row or row.get("lot_count_this_week") is None or row.get("lot_count_last_week") in (None, 0)):
+        ensure_flow04_demo_data(stage_name)
+        row = fetch_one(load_sql("locate_flow04_move_out_trend"), (stage_name, stage_name))
+    return row
+
 def locate_flow03_downstream_starvation(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
     """Return Flow 03 downstream starvation row, seeding local demo data if absent."""
     try:
@@ -446,6 +600,8 @@ def main() -> None:
             "locate_high_wip_stage",
             "locate_downstream_starvation",
             "locate_flow03_priority_lots",
+            "locate_flow04_impact_lot",
+            "locate_flow04_move_out_trend",
             "get_latest_active_case",
             "get_case_record",
         ],
@@ -466,6 +622,14 @@ def main() -> None:
         if not args.stage_name:
             raise SystemExit("--stage-name is required for locate_flow03_priority_lots")
         result = locate_flow03_priority_lots(args.stage_name)
+    elif args.action == "locate_flow04_impact_lot":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow04_impact_lot")
+        result = locate_flow04_impact_lot(args.stage_name)
+    elif args.action == "locate_flow04_move_out_trend":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow04_move_out_trend")
+        result = locate_flow04_move_out_trend(args.stage_name)
     elif args.action == "get_latest_active_case":
         result = get_latest_active_case(
             case_id=args.case_id,

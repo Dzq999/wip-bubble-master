@@ -23,7 +23,7 @@ FLOW_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 FLOW_MOCK_PATH = Path(__file__).resolve().parents[1] / "data" / "flow04_mock.json"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 
-from query_data import dumps, save_case_flow_record  # noqa: E402
+from query_data import dumps, locate_flow04_impact_lot, locate_flow04_move_out_trend, save_case_flow_record  # noqa: E402
 
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
@@ -212,17 +212,88 @@ def derive_downstream_context(previous_flow_contents: list[Dict[str, Any]]) -> D
     return {}
 
 
+def normalize_stage_name(raw: Any) -> Optional[str]:
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    match = re.search(r"([A-Za-z0-9]+(?:-[A-Za-z0-9]+)+)", text)
+    if match:
+        return match.group(1).upper()
+    text = re.sub(r"\bStage\b", "", text, flags=re.IGNORECASE).strip(" ：:=;；,，")
+    return text.upper() if text else None
+
+
+def derive_current_stage_context(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+    preferred_labels = {"object", "current stage", "stage", "当前stage", "当前 stage", "当前站点", "对象"}
+    for summary in reversed(previous_flow_contents):
+        content = summary.get("content", {})
+        for item in iter_content_items(content):
+            label = str(item.get("label") or "").strip()
+            label_key = label.lower().replace("：", ":")
+            if "downstream" in label_key or "下游" in label:
+                continue
+            if label_key not in preferred_labels and not any(token in label_key for token in ("current stage", "object")):
+                continue
+            stage_name = normalize_stage_name(item.get("value"))
+            if stage_name:
+                return _drop_empty(
+                    {
+                        "stage_name": stage_name,
+                        "source_flow_no": summary.get("flow_no"),
+                        "source_flow_name": summary.get("flow_name"),
+                        "source_label": label,
+                        "source_value": item.get("value"),
+                    }
+                )
+    return {"stage_name": "DNW-ANN", "source": "default_demo_stage"}
+
+
 def build_flow04_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
     flow04_inputs = load_flow_mock()
+    current_stage_context = derive_current_stage_context(previous_flow_contents)
+    current_stage = current_stage_context.get("stage_name") or "DNW-ANN"
     downstream_context = derive_downstream_context(previous_flow_contents)
+    sql_results: Dict[str, Any] = {
+        "stage_name": current_stage,
+        "impact_lot": None,
+        "move_out_trend": None,
+        "query_errors": [],
+    }
+
+    try:
+        impact_lot_row = locate_flow04_impact_lot(current_stage)
+        sql_results["impact_lot"] = impact_lot_row
+        if impact_lot_row and impact_lot_row.get("impact_lot_count") is not None:
+            impact_scope = flow04_inputs.setdefault("impact_scope", {})
+            impact_scope["impact_lot"] = str(int(float(impact_lot_row["impact_lot_count"])))
+            impact_scope["impact_lot_source"] = "sql.locate_flow04_impact_lot"
+    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
+        sql_results["query_errors"].append({"query": "locate_flow04_impact_lot", "error": str(exc)})
+
+    try:
+        move_out_row = locate_flow04_move_out_trend(current_stage)
+        sql_results["move_out_trend"] = move_out_row
+        if move_out_row:
+            move_out_impact = flow04_inputs.setdefault("move_out_impact", {})
+            move_out_impact["lot_count_this_week"] = move_out_row.get("lot_count_this_week")
+            move_out_impact["lot_count_last_week"] = move_out_row.get("lot_count_last_week")
+            move_out_impact["move_out_ratio_pct"] = move_out_row.get("move_out_ratio_pct")
+            move_out_impact["move_out_comment"] = move_out_row.get("move_out_comment")
+            move_out_impact["source"] = "sql.locate_flow04_move_out_trend"
+    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
+        sql_results["query_errors"].append({"query": "locate_flow04_move_out_trend", "error": str(exc)})
+
     downstream_supply = flow04_inputs.get("downstream_supply")
     if isinstance(downstream_supply, dict):
         stage_name = downstream_context.get("stage_name")
         if stage_name:
             downstream_supply["stage_name"] = stage_name
         downstream_supply["stage_source"] = "previous_flow_content.downstream"
-    return {"flow04_inputs": flow04_inputs, "derived_context": {"downstream": downstream_context}}
-
+    return {
+        "flow04_inputs": flow04_inputs,
+        "derived_context": {"current_stage": current_stage_context, "downstream": downstream_context},
+        "sql_results": _drop_empty(sql_results),
+    }
 
 def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> Dict[str, Any]:
     previous_records = normalize_previous_records(previous_record)
@@ -241,6 +312,8 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "generation_rules": [
             "优先从 previous_flows[].content 获取 Case Header、风险快照、异常确认结论、临时措施和门禁状态；不要读取或依赖前序全文 text。",
             "如果多个前序流程都提供 content，按 Flow 顺序综合使用；距离当前流程最近的内容优先。",
+            "Impact Lot 必须优先使用 raw_inputs.sql_results.impact_lot.impact_lot_count；SQL 无结果时才使用 flow04_inputs。",
+            "Move-Out Impact 必须优先使用 raw_inputs.sql_results.move_out_trend 的本周/上周 lot_count、move_out_ratio_pct 和 move_out_comment；不要编造 Shift Risk、ETA Risk 或交付承诺字段。",
             "下游对象必须优先使用 derived_context.downstream.stage_name；例如前序风险快照为 Next Stage = PW-PH 时，下游对象就是 PW-PH。",
             "Flow 04 只做影响范围评估：Impact Lot / WO、Hot Lot / Super Hot Run、Q-Time Risk、Move-Out Gap、下游供料和是否超过单点波动。",
             "Flow 04 不做最终根因排查，不做正式 Case 分级，不派发工程问题包。",
