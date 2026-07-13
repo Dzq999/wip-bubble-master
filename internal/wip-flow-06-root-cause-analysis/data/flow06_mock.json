@@ -1,0 +1,19 @@
+{
+  "root_cause_framework": {
+    "candidate_categories": [
+      "Move-In 突增导致短期流入超过消化能力",
+      "Tool Availability 下降或 PM / Down 占用产能",
+      "Tool Efficiency / Idle 异常导致实际产出偏低",
+      "Hold WIP 堆积导致可加工 WIP 被锁住",
+      "Dispatch / Priority 策略挤占普通批次",
+      "下游拉动不足或供需节奏错配"
+    ],
+    "default_stage": "DNW-ANN",
+    "confidence_rule": "证据同时覆盖流入、设备、WIP 状态和 move-out 时可给中高置信度；缺少任一关键证据时只能给中低置信度。"
+  },
+  "analysis_guardrails": [
+    "Flow 06 输出候选原因，不输出最终根因已确认。",
+    "候选原因必须引用 SQL 查询结果或前序 content 证据。",
+    "不能使用前端 demo 中不存在的指标名称。"
+  ]
+}

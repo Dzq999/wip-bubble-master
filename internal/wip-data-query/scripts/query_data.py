@@ -21,6 +21,12 @@ SQL_FILES = {
     "locate_flow03_priority_lots",
     "locate_flow04_impact_lot",
     "locate_flow04_move_out_trend",
+    "locate_flow06_wip_hold_run",
+    "locate_flow06_tool_status",
+    "locate_flow06_tool_efficiency",
+    "locate_flow06_tool_efficiency_detail",
+    "locate_flow06_move_in_trend",
+    "locate_flow06_move_out_trend",
     "get_latest_active_case",
     "get_case_record",
     "get_case_flow_record",
@@ -494,6 +500,194 @@ def locate_flow03_downstream_starvation(stage_name: str, ensure_demo_data: bool 
         row = locate_downstream_starvation(stage_name)
     return row
 
+
+def _ensure_column(cursor: Any, table_name: str, column_name: str, column_definition: str) -> None:
+    cursor.execute(f"SHOW COLUMNS FROM {table_name} LIKE %s", (column_name,))
+    if cursor.fetchone() is None:
+        cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_definition}")
+
+
+def _stage_capability(stage_name: str) -> str:
+    normalized = "".join(ch if ch.isalnum() else "_" for ch in stage_name.upper()).strip("_")
+    return f"CAP_{normalized or 'STAGE'}"
+
+
+def _insert_step_history_rows(cursor: Any, stage_name: str, prefix: str, this_week_count: int, last_week_count: int) -> None:
+    cursor.execute("SHOW COLUMNS FROM aifab.dwd_wip_lot_step_his_rt")
+    existing_columns = {str(row.get("Field")) for row in cursor.fetchall()}
+    preferred_columns = ["lot_name", "stage_name", "step_in_time", "step_out_time", "last_updated_time"]
+    insert_columns = [column for column in preferred_columns if column in existing_columns]
+    now = datetime.now().replace(microsecond=0)
+    rows: list[tuple[Any, ...]] = []
+    for index in range(1, this_week_count + 1):
+        value_by_column = {"lot_name": f"DEMO-{prefix}-{stage_name}-TW-{index}", "stage_name": stage_name, "step_in_time": now, "step_out_time": now, "last_updated_time": now}
+        rows.append(tuple(value_by_column[column] for column in insert_columns))
+    last_week_time = now - timedelta(days=10)
+    for index in range(1, last_week_count + 1):
+        value_by_column = {"lot_name": f"DEMO-{prefix}-{stage_name}-LW-{index}", "stage_name": stage_name, "step_in_time": last_week_time, "step_out_time": last_week_time, "last_updated_time": last_week_time}
+        rows.append(tuple(value_by_column[column] for column in insert_columns))
+    if not rows or not insert_columns:
+        return
+    column_sql = ", ".join(insert_columns)
+    placeholder_sql = ", ".join(["%s"] * len(insert_columns))
+    cursor.executemany(f"INSERT INTO aifab.dwd_wip_lot_step_his_rt ({column_sql}) VALUES ({placeholder_sql})", rows)
+
+
+def ensure_flow06_demo_data(stage_name: str) -> Dict[str, Any]:
+    """Create the minimal local demo data used by Flow 06 when source tables are absent."""
+    current_stage = (stage_name or "DNW-ANN").strip() or "DNW-ANN"
+    capability = _stage_capability(current_stage)
+    seeded: list[str] = []
+    ensure_flow04_demo_data(current_stage)
+    with connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("CREATE DATABASE IF NOT EXISTS aifab CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+            cursor.execute("CREATE DATABASE IF NOT EXISTS ffs_vfab_1 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS aifab.dim_conf_flow_manu (
+                  stage_name VARCHAR(128) NOT NULL,
+                  seq INT NOT NULL,
+                  capability VARCHAR(128) NULL,
+                  KEY idx_dim_conf_flow_manu_stage (stage_name),
+                  KEY idx_dim_conf_flow_manu_seq (seq),
+                  KEY idx_dim_conf_flow_manu_capability (capability)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """)
+            _ensure_column(cursor, "aifab.dim_conf_flow_manu", "capability", "capability VARCHAR(128) NULL")
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS aifab.dim_eqp_all_rt (
+                  eqp_name VARCHAR(128) NOT NULL,
+                  state_name VARCHAR(64) NULL,
+                  original_state VARCHAR(64) NULL,
+                  construct_type VARCHAR(64) NULL,
+                  name VARCHAR(128) NULL,
+                  capability VARCHAR(128) NULL,
+                  KEY idx_dim_eqp_all_rt_capability (capability),
+                  KEY idx_dim_eqp_all_rt_eqp (eqp_name)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """)
+            for column_name, definition in (("eqp_name", "eqp_name VARCHAR(128) NULL"), ("state_name", "state_name VARCHAR(64) NULL"), ("original_state", "original_state VARCHAR(64) NULL"), ("construct_type", "construct_type VARCHAR(64) NULL"), ("name", "name VARCHAR(128) NULL"), ("capability", "capability VARCHAR(128) NULL"), ("updated_time", "updated_time DATETIME NULL")):
+                _ensure_column(cursor, "aifab.dim_eqp_all_rt", column_name, definition)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS ffs_vfab_1.ads_ffs_feature_fact_eqp_rti (
+                  `unique_eqp_code#v1` VARCHAR(128) NOT NULL,
+                  `_biz_ts_#v1` DATETIME NOT NULL,
+                  `run_dur_h#v1` DECIMAL(18,4) DEFAULT 0,
+                  `idle_dur_h#v1` DECIMAL(18,4) DEFAULT 0,
+                  `cur_state#v1` VARCHAR(64) NULL,
+                  `last_state#v1` VARCHAR(64) NULL,
+                  KEY idx_ads_eqp_rti_eqp_ts (`unique_eqp_code#v1`, `_biz_ts_#v1`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """)
+
+            route_count = _count_with_cursor(cursor, "SELECT COUNT(1) AS cnt FROM aifab.dim_conf_flow_manu WHERE stage_name = %s", (current_stage,))
+            if route_count == 0:
+                max_seq = _fetch_scalar_with_cursor(cursor, "SELECT COALESCE(MAX(seq), 0) AS max_seq FROM aifab.dim_conf_flow_manu")
+                cursor.execute("INSERT INTO aifab.dim_conf_flow_manu (stage_name, seq, capability) VALUES (%s, %s, %s)", (current_stage, int(max_seq or 0) + 10, capability))
+                seeded.append("dim_conf_flow_manu.flow06_stage")
+            else:
+                cursor.execute("UPDATE aifab.dim_conf_flow_manu SET capability = COALESCE(capability, %s) WHERE stage_name = %s", (capability, current_stage))
+
+            active_tool_count = _count_with_cursor(cursor, "SELECT COUNT(1) AS cnt FROM aifab.dim_eqp_all_rt WHERE capability = %s AND construct_type = 'Normal' AND name <> 'DUMMY'", (capability,))
+            if active_tool_count == 0:
+                now = datetime.now().replace(microsecond=0)
+                cursor.executemany("""
+                    INSERT INTO aifab.dim_eqp_all_rt
+                      (eqp_name, state_name, original_state, construct_type, name, capability, updated_time)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, [("PRTAA01", "正常生产", "RUN", "Normal", "PRTAA01", capability, now), ("PRTAA02", "正常生产", "RUN", "Normal", "PRTAA02", capability, now)])
+                seeded.append("dim_eqp_all_rt.flow06_tools")
+
+            rti_count = _count_with_cursor(cursor, """
+                SELECT COUNT(1) AS cnt
+                FROM ffs_vfab_1.ads_ffs_feature_fact_eqp_rti
+                WHERE `unique_eqp_code#v1` IN ('PRTAA01', 'PRTAA02')
+                  AND `_biz_ts_#v1` >= (unix_timestamp(timestamp(date(current_timestamp - interval 7 hour - interval 30 minute)) + interval 7 hour + interval 30 minute) * 1000)
+                """)
+            if rti_count == 0:
+                now = int(datetime.now().timestamp() * 1000)
+                cursor.executemany("""
+                    INSERT INTO ffs_vfab_1.ads_ffs_feature_fact_eqp_rti
+                      (`unique_eqp_code#v1`, `_biz_ts_#v1`, `run_dur_h#v1`, `idle_dur_h#v1`, `cur_state#v1`, `last_state#v1`)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """, [("PRTAA01", now, 6, 0, "正常生产", "RUN"), ("PRTAA02", now, 6, 0, "正常生产", "RUN")])
+                seeded.append("ads_ffs_feature_fact_eqp_rti.flow06_runtime")
+
+            hold_run_count = _count_with_cursor(cursor, """
+                SELECT COUNT(1) AS cnt
+                FROM aifab.dim_wip_lot_rt
+                WHERE stage_name = %s
+                  AND lot_state IN ('hold', 'running hold', 'inventory hold', 'running')
+                """, (current_stage,))
+            if hold_run_count == 0:
+                _insert_wip_lot_rows(cursor, [(current_stage, 4, "running", 25), (current_stage, 4, "running", 25), (current_stage, 4, "hold", 25)])
+                seeded.append("dim_wip_lot_rt.flow06_hold_run")
+
+            step_history_count = _count_with_cursor(cursor, """
+                SELECT COUNT(1) AS cnt
+                FROM aifab.dwd_wip_lot_step_his_rt
+                WHERE stage_name = %s
+                  AND last_updated_time >= current_timestamp - interval 2 week
+                """, (current_stage,))
+            if step_history_count == 0:
+                _insert_step_history_rows(cursor, current_stage, "FLOW06-STEP", this_week_count=18, last_week_count=12)
+                seeded.append("dwd_wip_lot_step_his_rt.flow06_step_history")
+    return {"stage_name": current_stage, "capability": capability, "seeded": seeded}
+
+
+def _fetch_flow06_one(sql_name: str, stage_name: str, params: Iterable[Any], ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    try:
+        row = fetch_one(load_sql(sql_name), params)
+    except Exception:
+        if not ensure_demo_data:
+            raise
+        ensure_flow06_demo_data(stage_name)
+        row = fetch_one(load_sql(sql_name), params)
+    if ensure_demo_data and not row:
+        ensure_flow06_demo_data(stage_name)
+        row = fetch_one(load_sql(sql_name), params)
+    if ensure_demo_data and sql_name == "locate_flow06_tool_efficiency" and row and int(row.get("eqp_count") or 0) == 0:
+        ensure_flow06_demo_data(stage_name)
+        row = fetch_one(load_sql(sql_name), params)
+    return row
+
+
+def _fetch_flow06_all(sql_name: str, stage_name: str, params: Iterable[Any], ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
+    try:
+        rows = fetch_all(load_sql(sql_name), params)
+    except Exception:
+        if not ensure_demo_data:
+            raise
+        ensure_flow06_demo_data(stage_name)
+        rows = fetch_all(load_sql(sql_name), params)
+    if ensure_demo_data and not rows:
+        ensure_flow06_demo_data(stage_name)
+        rows = fetch_all(load_sql(sql_name), params)
+    return rows
+
+
+def locate_flow06_wip_hold_run(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_flow06_wip_hold_run", stage_name, (stage_name,), ensure_demo_data)
+
+
+def locate_flow06_tool_status(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_flow06_tool_status", stage_name, (stage_name,), ensure_demo_data)
+
+
+def locate_flow06_tool_efficiency(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_flow06_tool_efficiency", stage_name, (stage_name,), ensure_demo_data)
+
+
+def locate_flow06_tool_efficiency_detail(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
+    return _fetch_flow06_all("locate_flow06_tool_efficiency_detail", stage_name, (stage_name,), ensure_demo_data)
+
+
+def locate_flow06_move_in_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_flow06_move_in_trend", stage_name, (stage_name, stage_name), ensure_demo_data)
+
+
+def locate_flow06_move_out_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_flow06_move_out_trend", stage_name, (stage_name, stage_name), ensure_demo_data)
 def get_latest_active_case(
     case_id: Optional[str] = None,
     next_flow_no: Optional[str] = None,
@@ -602,6 +796,12 @@ def main() -> None:
             "locate_flow03_priority_lots",
             "locate_flow04_impact_lot",
             "locate_flow04_move_out_trend",
+    "locate_flow06_wip_hold_run",
+    "locate_flow06_tool_status",
+    "locate_flow06_tool_efficiency",
+    "locate_flow06_tool_efficiency_detail",
+    "locate_flow06_move_in_trend",
+    "locate_flow06_move_out_trend",
             "get_latest_active_case",
             "get_case_record",
         ],
@@ -630,6 +830,30 @@ def main() -> None:
         if not args.stage_name:
             raise SystemExit("--stage-name is required for locate_flow04_move_out_trend")
         result = locate_flow04_move_out_trend(args.stage_name)
+    elif args.action == "locate_flow06_wip_hold_run":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow06_wip_hold_run")
+        result = locate_flow06_wip_hold_run(args.stage_name)
+    elif args.action == "locate_flow06_tool_status":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow06_tool_status")
+        result = locate_flow06_tool_status(args.stage_name)
+    elif args.action == "locate_flow06_tool_efficiency":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow06_tool_efficiency")
+        result = locate_flow06_tool_efficiency(args.stage_name)
+    elif args.action == "locate_flow06_tool_efficiency_detail":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow06_tool_efficiency_detail")
+        result = locate_flow06_tool_efficiency_detail(args.stage_name)
+    elif args.action == "locate_flow06_move_in_trend":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow06_move_in_trend")
+        result = locate_flow06_move_in_trend(args.stage_name)
+    elif args.action == "locate_flow06_move_out_trend":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_flow06_move_out_trend")
+        result = locate_flow06_move_out_trend(args.stage_name)
     elif args.action == "get_latest_active_case":
         result = get_latest_active_case(
             case_id=args.case_id,
@@ -647,6 +871,15 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
 
 
 
