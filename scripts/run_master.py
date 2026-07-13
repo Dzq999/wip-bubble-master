@@ -17,12 +17,14 @@ FLOW01_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-01-anomaly-detection" / "
 FLOW02_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-02-anomaly-confirmation" / "scripts"
 FLOW03_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-03-containment" / "scripts"
 FLOW04_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-04-impact-assessment" / "scripts"
+FLOW05_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-05-case-classification" / "scripts"
 SNAPSHOT_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-case-snapshot" / "scripts"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW01_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW02_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW03_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW04_SCRIPT_DIR))
+sys.path.insert(0, str(FLOW05_SCRIPT_DIR))
 sys.path.insert(0, str(SNAPSHOT_SCRIPT_DIR))
 
 from query_data import dumps, get_case_flow_record, get_latest_active_case, locate_downstream_starvation, locate_high_wip_stage  # noqa: E402
@@ -30,6 +32,7 @@ from run_flow01 import run as run_flow01  # noqa: E402
 from run_flow02 import run as run_flow02  # noqa: E402
 from run_flow03 import run as run_flow03  # noqa: E402
 from run_flow04 import run as run_flow04  # noqa: E402
+from run_flow05 import run as run_flow05  # noqa: E402
 from build_snapshot import build_case_snapshot  # noqa: E402
 
 
@@ -225,6 +228,21 @@ def run_next_flow_04(record: Dict[str, Any]) -> Dict[str, Any]:
         return model_output_required_response(flow_result, current_case_summary(record), "04", "影响范围评估")
     result = dict(flow_result)
     result["reason"] = "continued_case_and_ran_flow_04"
+    return result
+
+def run_next_flow_05(record: Dict[str, Any]) -> Dict[str, Any]:
+    case_id = str(record.get("case_id") or "")
+    previous_records = []
+    for flow_no in ("01", "02", "03"):
+        previous = get_case_flow_record(case_id, flow_no)
+        if previous:
+            previous_records.append(previous)
+    previous_records.append(record)
+    flow_result = run_flow05(case_id, previous_record=previous_records)
+    if not flow_result.get("ok", True):
+        return model_output_required_response(flow_result, current_case_summary(record), "05", "Case 分级与处置判定")
+    result = dict(flow_result)
+    result["reason"] = "continued_case_and_ran_flow_05"
     return result
 def handle(
     message: str,

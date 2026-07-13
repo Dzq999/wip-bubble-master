@@ -1,0 +1,15 @@
+{
+  "classification_matrix": {
+    "case_level": "P1 / Major",
+    "impact_severity": "超过单点波动，涉及 Lot / WO / Q-Time / Move-Out / 下游供料",
+    "disposition_path": "MFG Lead 牵头，Module Owner / PE / IE 协同，保持临时措施并进入原因排查",
+    "initial_owner": "MFG / Case Owner",
+    "collaboration": "Module Owner、PE、IE、Planning",
+    "escalation_gate": "Case Owner 确认 P1 / Major 分级与处置路径",
+    "next_flow_gate": "进入 Flow 06 异常原因排查"
+  },
+  "classification_rules": [
+    "影响超过单点波动且存在 Q-Time High、Hot Lot / Super Hot Run 或下游 Starvation 时，建议 P1 / Major。",
+    "证据不足时不强行分级，Case 进入 On Hold 并要求补齐影响范围证据。"
+  ]
+}
