@@ -19,6 +19,7 @@ FLOW03_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-03-containment" / "script
 FLOW04_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-04-impact-assessment" / "scripts"
 FLOW05_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-05-case-classification" / "scripts"
 FLOW06_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-06-root-cause-analysis" / "scripts"
+FLOW07_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-flow-07-collaboration-package" / "scripts"
 SNAPSHOT_SCRIPT_DIR = SKILL_DIR / "internal" / "wip-case-snapshot" / "scripts"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW01_SCRIPT_DIR))
@@ -27,6 +28,7 @@ sys.path.insert(0, str(FLOW03_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW04_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW05_SCRIPT_DIR))
 sys.path.insert(0, str(FLOW06_SCRIPT_DIR))
+sys.path.insert(0, str(FLOW07_SCRIPT_DIR))
 sys.path.insert(0, str(SNAPSHOT_SCRIPT_DIR))
 
 from query_data import dumps, get_case_flow_record, get_latest_active_case, locate_downstream_starvation, locate_high_wip_stage  # noqa: E402
@@ -36,6 +38,7 @@ from run_flow03 import run as run_flow03  # noqa: E402
 from run_flow04 import run as run_flow04  # noqa: E402
 from run_flow05 import run as run_flow05  # noqa: E402
 from run_flow06 import run as run_flow06  # noqa: E402
+from run_flow07 import run as run_flow07  # noqa: E402
 from build_snapshot import build_case_snapshot  # noqa: E402
 
 
@@ -262,6 +265,21 @@ def run_next_flow_06(record: Dict[str, Any]) -> Dict[str, Any]:
     result = dict(flow_result)
     result["reason"] = "continued_case_and_ran_flow_06"
     return result
+
+def run_next_flow_07(record: Dict[str, Any]) -> Dict[str, Any]:
+    case_id = str(record.get("case_id") or "")
+    previous_records = []
+    for flow_no in ("01", "02", "03", "04", "05"):
+        previous = get_case_flow_record(case_id, flow_no)
+        if previous:
+            previous_records.append(previous)
+    previous_records.append(record)
+    flow_result = run_flow07(case_id, previous_record=previous_records)
+    if not flow_result.get("ok", True):
+        return model_output_required_response(flow_result, current_case_summary(record), "07", "工程问题包与协同任务")
+    result = dict(flow_result)
+    result["reason"] = "continued_case_and_ran_flow_07"
+    return result
 def handle(
     message: str,
     action: Optional[str],
@@ -298,6 +316,8 @@ def handle(
             return run_next_flow_05(active_case)
         if next_flow_no == "06":
             return run_next_flow_06(active_case)
+        if next_flow_no == "07":
+            return run_next_flow_07(active_case)
         return {
             "ok": False,
             "reason": "no_next_flow",
@@ -399,6 +419,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
 

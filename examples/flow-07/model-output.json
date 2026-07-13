@@ -1,0 +1,81 @@
+{
+  "ok": true,
+  "case_id": "demo-case-flow-07",
+  "flow_no": "07",
+  "flow_name": "工程问题包与协同任务",
+  "flow_status": "Closed",
+  "case_status": "Processing",
+  "next_flow_no": "08",
+  "next_flow_name": "处置效果确认",
+  "collaboration_package_status": "已生成工程问题包与协同任务建议",
+  "text": "# 07 工程问题包与协同任务\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: demo-case-flow-07\n- Stage: DNW-ANN\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- Flow 06 已完成候选原因排查，主候选为 Move-In 突增造成短期流入压力。\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 06 已完成候选原因排查，现在进入 Flow 07 工程问题包与协同任务。\n\n### Agent 接管\n我将把候选原因、影响范围和临时措施整理成同一个 Case 下的协同任务包。\n\n### Agent 思考过程\n当前阶段不验证处置是否有效，而是让相关角色并行反馈，避免问题散落在多个独立任务中。\n\n### Agent 分析计划\n- 汇总问题包范围和候选原因。\n- 拆分 MFG、Module Owner、PE、IE / Planning、Area Owner 的协同任务。\n- 定义 SLA、反馈格式和 Flow 08 可验证恢复指标。\n\n### 数据 / 工具调用\n- Engineering Package: 问题包挂在同一 Case 下，范围覆盖当前 stage 高 WIP、下游供料风险和优先级批次保护 [Done]\n- Root Cause Candidate: 主候选为 Move-In 突增造成短期流入压力，次候选为 Dispatch / priority 保护挤占普通批次 [Done]\n- Task Breakdown: 拆分 MFG、Module Owner、PE、IE / Planning、Area Owner 五类任务 [Done]\n- Owner Assignment: MFG / Case Owner 牵头，Module Owner、PE、IE / Planning、Area Owner 协同 [Done]\n- Collaboration SLA: 当前班次内完成初步反馈，关键风险项 2h 内更新状态 [Done]\n- Recovery Metric: WIP ratio、Queue、Move-Out、Tool Active、下游 Starvation、Hot Lot / Super Hot Run 风险 [Done]\n- Next Flow Gate: 角色完成初步反馈并定义恢复验证指标后进入 Flow 08 [Done]\n\n### Agent 观察结果\n- Flow 06 已给出可行动的候选原因，可以形成协同任务包。\n- 任务需要继续保持 Flow 03 临时措施，并补齐 dispatch log、hold reason 和 product mix 变化。\n\n### Agent 分析判断\n本阶段建议由 MFG / Case Owner 牵头，围绕流入压力和派工策略两个候选方向组织并行反馈；所有任务先作为建议任务包等待业务侧确认。\n\n### Agent 阶段输出\n输出工程问题包摘要、角色任务、SLA、反馈要求和恢复验证指标。\n\n### AI Agent\n建议在进入 Flow 08 前确认每个角色的反馈字段和恢复指标口径，避免后续只看到任务进度而看不到指标恢复。\n\n## 当前阶段结果\n### 业务结果\n- Collaboration Package Status: 已生成工程问题包与协同任务建议\n- Package Scope: 当前 stage WIP Bubble、下游供料风险、Hot Lot / Super Hot Run 保护\n- Primary Owner: MFG / Case Owner\n- Collaboration Tasks: MFG / Module Owner / PE / IE Planning / Area Owner\n- SLA: 当前班次内初步反馈，关键风险项 2h 内更新\n- Recovery Metrics: WIP ratio、Queue、Move-Out、Tool Active、下游 Starvation、Hot Lot / Super Hot Run 风险\n- Next Flow: 08 处置效果确认\n\n### 本阶段结论\n- 可以进入跨角色协同推进，但仍需业务侧确认任务包后再执行现场动作。\n\n### Agent 判断逻辑\n- 候选原因已足够支撑任务拆分；处置效果尚未验证，因此下一步应进入 Flow 08 观察和确认。\n\n### 状态与门禁\n- Next Flow: 08 处置效果确认\n- Gate: 角色完成初步反馈并定义恢复验证指标后进入处置效果确认\n\n### 关键证据\n- Flow 05 已明确 Case 等级、处置路径和初始主责。\n- Flow 06 已给出主候选原因、次候选原因和待补证据。\n- Flow 03 临时措施仍需在协同期间保持受控。",
+  "content": {
+    "title": "07 工程问题包与协同任务",
+    "containers": [
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {"label": "Case ID", "value": "demo-case-flow-07"},
+              {"label": "Stage", "value": "DNW-ANN"}
+            ]
+          },
+          {
+            "title": "Case Risk Snapshot｜异常发生时（风险快照）",
+            "items": [
+              {"label": "Prior Flow", "value": "Flow 06 已完成候选原因排查"},
+              {"label": "Primary Candidate", "value": "Move-In 突增造成短期流入压力"}
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {"title": "系统 / 用户触发", "items": ["Flow 06 已完成候选原因排查，现在进入 Flow 07 工程问题包与协同任务。"]},
+          {"title": "Agent 接管", "items": ["把候选原因、影响范围和临时措施整理成同一个 Case 下的协同任务包。"]},
+          {"title": "Agent 思考过程", "items": ["当前阶段不验证处置是否有效，而是组织相关角色并行反馈。"]},
+          {"title": "Agent 分析计划", "items": ["汇总问题包范围、拆分角色任务、定义 SLA 和恢复验证指标。"]},
+          {
+            "title": "数据 / 工具调用",
+            "items": [
+              {"label": "Engineering Package", "value": "问题包挂在同一 Case 下，覆盖当前 stage 高 WIP、下游供料风险和优先级批次保护", "status": "Done"},
+              {"label": "Root Cause Candidate", "value": "主候选为 Move-In 突增造成短期流入压力，次候选为 Dispatch / priority 保护挤占普通批次", "status": "Done"},
+              {"label": "Task Breakdown", "value": "拆分 MFG、Module Owner、PE、IE / Planning、Area Owner 五类任务", "status": "Done"},
+              {"label": "Owner Assignment", "value": "MFG / Case Owner 牵头，Module Owner、PE、IE / Planning、Area Owner 协同", "status": "Done"},
+              {"label": "Collaboration SLA", "value": "当前班次内完成初步反馈，关键风险项 2h 内更新状态", "status": "Done"},
+              {"label": "Recovery Metric", "value": "WIP ratio、Queue、Move-Out、Tool Active、下游 Starvation、Hot Lot / Super Hot Run 风险", "status": "Done"},
+              {"label": "Next Flow Gate", "value": "角色完成初步反馈并定义恢复验证指标后进入 Flow 08", "status": "Done"}
+            ]
+          },
+          {"title": "Agent 观察结果", "items": ["Flow 06 已给出可行动的候选原因。", "任务需要补齐 dispatch log、hold reason 和 product mix 变化。"]},
+          {"title": "Agent 分析判断", "items": ["建议由 MFG / Case Owner 牵头，围绕流入压力和派工策略两个候选方向组织并行反馈。"]},
+          {"title": "Agent 阶段输出", "items": ["输出工程问题包摘要、角色任务、SLA、反馈要求和恢复验证指标。"]},
+          {"title": "AI Agent", "items": ["建议在进入 Flow 08 前确认每个角色的反馈字段和恢复指标口径。"]}
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {
+            "title": "业务结果",
+            "items": [
+              {"label": "Collaboration Package Status", "value": "已生成工程问题包与协同任务建议"},
+              {"label": "Package Scope", "value": "当前 stage WIP Bubble、下游供料风险、Hot Lot / Super Hot Run 保护"},
+              {"label": "Primary Owner", "value": "MFG / Case Owner"},
+              {"label": "Collaboration Tasks", "value": "MFG / Module Owner / PE / IE Planning / Area Owner"},
+              {"label": "SLA", "value": "当前班次内初步反馈，关键风险项 2h 内更新"},
+              {"label": "Recovery Metrics", "value": "WIP ratio、Queue、Move-Out、Tool Active、下游 Starvation、Hot Lot / Super Hot Run 风险"}
+            ]
+          },
+          {"title": "本阶段结论", "items": ["可以进入跨角色协同推进，但仍需业务侧确认任务包后再执行现场动作。"]},
+          {"title": "Agent 判断逻辑", "items": ["候选原因已足够支撑任务拆分；处置效果尚未验证，因此下一步应进入 Flow 08。"]},
+          {"title": "状态与门禁", "items": ["Next Flow: 08 处置效果确认", "Gate: 角色完成初步反馈并定义恢复验证指标后进入处置效果确认"]},
+          {"title": "关键证据", "items": ["Flow 05 已明确 Case 等级、处置路径和初始主责。", "Flow 06 已给出主候选原因、次候选原因和待补证据。", "Flow 03 临时措施仍需在协同期间保持受控。"]}
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "collaboration_framework": {
+    "package_type": "WIP Bubble Engineering Package",
+    "primary_owner": "MFG / Case Owner",
+    "task_roles": [
+      {"role": "MFG / Shift Leader", "focus": "执行临时措施、控制 release / dispatch 节奏、反馈班次执行结果"},
+      {"role": "Module Owner", "focus": "确认候选原因与模块约束，判断是否需要工程限制或 release 条件"},
+      {"role": "PE / Process Engineer", "focus": "复核 product mix、recipe / process condition 与异常批次相关性"},
+      {"role": "IE / Planning", "focus": "复核 target、move-in / move-out 节奏、下游供需与恢复窗口"},
+      {"role": "Area Owner", "focus": "协调现场资源、确认跨班交接和恢复指标"}
+    ],
+    "default_sla": "当前班次内完成初步反馈，关键风险项 2h 内更新状态",
+    "next_flow_gate": "角色任务完成初步反馈并定义恢复验证指标后进入 Flow 08"
+  },
+  "guardrails": [
+    "Flow 07 输出协同任务包，不声称已经真实派单或通知。",
+    "任务必须挂在同一个 Case 下，避免碎片化。",
+    "恢复指标必须可被 Flow 08 验证。"
+  ]
+}
