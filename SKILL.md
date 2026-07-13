@@ -62,6 +62,7 @@ examples/
 - `examples/flow-02/model-output.json`：Flow 02 异常确认输出示例，复用 Flow 01 保存快照，只补充成立性校验结果。
 - `examples/flow-03/model-output.json`：Flow 03 临时措施输出示例，复用前序快照，只补充短期风险控制动作。
 - `examples/flow-04/model-output.json`：Flow 04 影响范围评估输出示例，复用前序快照，只补充 Impact Lot / Impact WO / Hot Lot / Super Hot Run / Q-Time / Move-Out Gap / 下游供料。
+- `examples/flow-05/model-output.json`：Flow 05 Case 分级与处置判定输出示例，复用前序快照和影响范围，只补充 Case Level、处置路径、初始主责和进入 Flow 06 的门禁。
 
 示例只作为 FaaS 编排和模型输出格式参考，不参与运行。标题可以参考示例保持稳定，但正文话术必须由当前 Agent 根据本次 SQL/mock 原始数据重新组织，不要原文照抄示例。
 
@@ -176,7 +177,7 @@ examples/
 2. 如果外部请求与 WIP 分析相关，并且不是明确的“继续下一流程”，每次都创建新的 UUID `case_id` 并执行 Flow 01；不要通过 `get_latest_active_case` 复用历史 case。
 3. 只有用户明确确认继续时，才从 `vfab_agent.fab_case_flow_record` 读取前序 Flow 记录；请求必须传入上一流程编号 `flow_no`，例如执行 Flow 02 时传 `flow_no=01`，并可选传入 `case_id` 限定 Case。路由依据前序记录中的 `next_flow_no`。
 4. 流程必须严格按 SOP 顺序执行。即使用户直接询问最终原因，也不能跳到 Flow 06。
-5. 当前已实现 Flow 01、Flow 02、Flow 03 和 Flow 04。内部模块位于 `internal/`：`wip-data-query`、`wip-case-snapshot`、`wip-flow-01-anomaly-detection`、`wip-flow-02-anomaly-confirmation`、`wip-flow-03-containment` 和 `wip-flow-04-impact-assessment`。Flow 02 只做异常成立性确认：数据刷新、指标口径、Target 有效性、异常持续时间和同类未关闭 Case。Flow 03 只做临时措施：Hot Lot / Super Hot Run 保护、非关键 Move-In 控制、下游通知和 Hold 建议，不做最终根因排查。Flow 04 只做影响范围评估：Impact Lot、Impact WO、Hot Lot / Super Hot Run、Q-Time、Move-Out Gap 和下游供料，不做正式 Case 分级。
+5. 当前已实现 Flow 01、Flow 02、Flow 03、Flow 04 和 Flow 05。内部模块位于 `internal/`：`wip-data-query`、`wip-case-snapshot`、`wip-flow-01-anomaly-detection`、`wip-flow-02-anomaly-confirmation`、`wip-flow-03-containment`、`wip-flow-04-impact-assessment` 和 `wip-flow-05-case-classification`。Flow 02 只做异常成立性确认：数据刷新、指标口径、Target 有效性、异常持续时间和同类未关闭 Case。Flow 03 只做临时措施：Hot Lot / Super Hot Run 保护、非关键 Move-In 控制、下游通知和 Hold 建议，不做最终根因排查。Flow 04 只做影响范围评估：Impact Lot、Impact WO、Hot Lot / Super Hot Run、Q-Time、Move-Out Gap 和下游供料，不做正式 Case 分级。Flow 05 只做 Case 分级与处置判定：Case Level、处置路径、初始主责、协作角色和进入 Flow 06 的门禁，不做最终根因排查。
 6. 单个 Flow 执行结束后，`flow_status` 应保存为 `Closed`。是否继续下一个 Flow 由 `case_status`、`next_flow_no` 和用户确认共同决定。
 7. Flow 01 负责生成并保存 WIP Case Snapshot。后续 Flow 默认读取 Flow 01 保存的 `wip_case_snapshot`：其中 WIP、Queue、Tool Uptime、Q-Time 等风险指标是异常触发瞬间的历史快照；Case Age、Stage Elapsed、SLA Remaining 等是打开界面时的动态值，可按当前时间重新计算或刷新。Flow 02 及以后不要为了拿快照而重新执行 `wip-case-snapshot`。
 8. 后续 Flow 只有在分析所需字段无法从前序 Flow 保存结果中取得时，才查询对应 SQL 或读取对应 mock；如果 SQL 和 mock 都没有该字段，则忽略该内容，不输出占位值。
