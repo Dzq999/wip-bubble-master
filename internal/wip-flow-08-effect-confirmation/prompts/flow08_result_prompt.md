@@ -9,7 +9,7 @@
 - 输出完整 Markdown `text` 和完整结构化 `content.containers`。
 - Flow 08 默认假设处置反馈已返回并完成初步确认，当前要确认是否可以进入 Flow 09 影响消除观察。
 - 异常数据恢复部分使用 `dynamic_recovery_mock.trend_items`：只展示前序中已异常指标的恢复值；原本不异常的指标只能写 Stable / 保持观测值，不要强行改值。
-- `WIP Case Snapshot` 必须包含 3 个 section：`Case Header`、`Case Risk Snapshot｜异常发生时（风险快照）`、`Case Risk Trend｜处置后（恢复趋势）`。
+- `WIP Case Snapshot` 仍然只包含 2 个 section：`Case Header`、`Case Risk Trend｜处置后（恢复趋势）`。Flow 08 中不再输出 `Case Risk Snapshot｜异常发生时（风险快照）`，而是由 `Case Risk Trend` 替代它。
 - `Case Risk Trend｜处置后（恢复趋势）` 的 items 使用 `{label,value,meta}`，`value` 展示 `异常值 -> 正常值`，`meta` 包含 `from`、`to`、`status`、`tone`、`mocked`。`tone` 使用 `down`、`up` 或 `complete`，以贴合前端 demo 的恢复趋势样式。
 - Flow 08 只做处置效果确认：角色反馈检查、恢复指标检查、风险是否继续扩散、是否需要回退/升级、是否进入 Flow 09。
 - 可以写“初步有效 / 部分有效 / 证据不足 / 需回退升级”，不能写“异常已完全恢复 / Case 可关闭”。

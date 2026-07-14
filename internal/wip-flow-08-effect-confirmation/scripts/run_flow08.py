@@ -353,7 +353,7 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
             "只从 previous_flows[].content 和 flow08_inputs 获取事实与门禁规则；不要读取或返回旧 Flow 08 结果。",
             "Flow 08 默认按处置反馈已返回并完成初步确认来生成演示结果，但仍只能写初步有效和进入观察。",
             "异常数据恢复部分使用 dynamic_recovery_mock：只对前序异常指标生成恢复后演示值，原本不异常的指标保持原值。",
-            "WIP Case Snapshot 必须包含 Case Risk Trend｜处置后（恢复趋势），展示异常值 -> 正常值。",
+            "WIP Case Snapshot 仍然只包含两段：Case Header 和 Case Risk Trend｜处置后（恢复趋势）；Flow 08 不再输出 Case Risk Snapshot。",
             "只有输入明确缺少反馈或恢复指标证据时，才设置 case_status=On Hold、next_flow_no=null。",
             "脚本不构造最终展示结构或固定话术。",
         ],
@@ -362,7 +362,7 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
 
 
 REQUIRED_CONTENT_SHAPE = [
-    ("WIP Case Snapshot", ["Case Header", "Case Risk Snapshot｜异常发生时（风险快照）", "Case Risk Trend｜处置后（恢复趋势）"]),
+    ("WIP Case Snapshot", ["Case Header", "Case Risk Trend｜处置后（恢复趋势）"]),
     (
         "当前阶段对话",
         ["系统 / 用户触发", "Agent 接管", "Agent 思考过程", "Agent 分析计划", "数据 / 工具调用", "Agent 观察结果", "Agent 分析判断", "Agent 阶段输出", "AI Agent"],
@@ -605,8 +605,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-
-
-

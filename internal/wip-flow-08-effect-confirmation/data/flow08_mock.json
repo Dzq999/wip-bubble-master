@@ -5,6 +5,7 @@
     "dynamic_recovery_rule": "无需 SQL 或额外脚本；只对前序中已异常的指标生成恢复后演示值，原本不异常的指标保持原值。Actual WIP 若高于 Target WIP，则恢复值取略低于 Target WIP。",
     "case_risk_trend_style": {
       "section_title": "Case Risk Trend｜处置后（恢复趋势）",
+      "snapshot_rule": "Flow 08 的 WIP Case Snapshot 仍然只有 Case Header 和 Case Risk Trend 两段；Case Risk Trend 替代前序 Flow 的 Case Risk Snapshot。",
       "item_shape": {"label": "指标名", "value": "异常值 -> 正常值", "meta": {"from": "异常值", "to": "正常值", "status": "Recovered | Stable", "tone": "down | up | complete", "mocked": true}}
     },
     "confirmation_dimensions": [

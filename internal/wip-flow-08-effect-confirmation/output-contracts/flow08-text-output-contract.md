@@ -10,7 +10,7 @@ Flow 08 只完成“处置效果确认”：基于 Flow 07 的协同任务、SLA
 ## WIP Case Snapshot
 ### Case Header
 - ...
-### Case Risk Snapshot｜异常发生时（风险快照）
+### Case Risk Trend｜处置后（恢复趋势）
 - ...
 
 ## 当前阶段对话
@@ -65,8 +65,6 @@ Flow 08 只完成“处置效果确认”：基于 Flow 07 的协同任务、SLA
 - `数据 / 工具调用`：必须覆盖 Action Feedback Check、SLA Check、Recovery Metric Check、WIP / Queue Trend、Downstream Risk Check、Rollback / Escalation Decision 和 Next Flow Gate。
 - `Agent 分析判断`：只判断初步效果和是否需要回退/升级，不宣布异常完全恢复。
 - `状态与门禁`：只写 Next Flow 和 Gate，不展示 Flow Status / Case Status。
+- `WIP Case Snapshot` 仍然只包含 `Case Header` 和 `Case Risk Trend｜处置后（恢复趋势）` 两段；Flow 08 中 `Case Risk Trend` 替代前序 Flow 的 `Case Risk Snapshot`。
 - `Case Risk Trend｜处置后（恢复趋势）` 必须展示异常值 -> 正常值；恢复值来自 `dynamic_recovery_mock.trend_items`。`meta.tone` 使用 `down`、`up` 或 `complete`。
 - 如果输入明确证据不足，`case_status=On Hold`、`next_flow_no=null`，并说明缺失证据；否则默认进入 Flow 09。
-
-
-
