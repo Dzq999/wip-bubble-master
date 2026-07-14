@@ -1,0 +1,21 @@
+{
+  "effect_confirmation_framework": {
+    "default_status": "Evidence Pending",
+    "confirmation_dimensions": [
+      "角色反馈是否已返回",
+      "临时措施是否仍在受控范围",
+      "WIP / Queue 是否停止恶化或开始回落",
+      "Move-Out 是否恢复到可接受节奏",
+      "Tool Active / OE 是否无新增异常",
+      "下游 Starvation 是否未进一步扩大",
+      "Hot Lot / Super Hot Run 是否仍被保护"
+    ],
+    "gate_to_flow09": "处置动作具备初步效果证据，且没有新增高风险扩散信号",
+    "hold_gate": "缺少角色反馈、缺少恢复指标或指标仍恶化时，不进入 Flow 09"
+  },
+  "guardrails": [
+    "Flow 08 只确认初步效果，不宣布异常已完全恢复。",
+    "没有恢复后数据或角色反馈时，必须输出证据不足或 On Hold。",
+    "不能使用前端 demo 中不存在的恢复指标值。"
+  ]
+}

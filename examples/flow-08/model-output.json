@@ -1,0 +1,80 @@
+{
+  "ok": true,
+  "case_id": "demo-case-flow-08",
+  "flow_no": "08",
+  "flow_name": "处置效果确认",
+  "flow_status": "Closed",
+  "case_status": "On Hold",
+  "next_flow_no": null,
+  "next_flow_name": null,
+  "effect_confirmation_status": "证据不足，待补齐角色反馈与恢复指标",
+  "text": "# 08 处置效果确认\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: demo-case-flow-08\n- Stage: DNW-ANN\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- Flow 07 已生成工程问题包与协同任务建议，但当前还缺少处置后反馈和恢复指标证据。\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 07 已生成工程问题包与协同任务，现在进入 Flow 08 处置效果确认。\n\n### Agent 接管\n我将检查协同任务反馈、SLA、恢复指标和风险扩散信号，判断是否具备进入 Flow 09 的条件。\n\n### Agent 思考过程\n当前阶段不能把任务建议当成已执行结果；只有看到角色反馈和恢复指标后，才能判断处置是否初步有效。\n\n### Agent 分析计划\n- 检查 MFG / Module Owner / PE / IE Planning / Area Owner 是否已有初步反馈。\n- 检查 SLA 是否有可追踪状态。\n- 检查 WIP / Queue、Move-Out、Tool Active、下游 Starvation 和优先级批次风险是否有恢复后证据。\n- 判断是否进入 Flow 09，或保持 On Hold 等待补证。\n\n### 数据 / 工具调用\n- Action Feedback Check: 当前仅有 Flow 07 的任务建议，未看到角色完成初步反馈的证据 [Done]\n- SLA Check: Flow 07 定义当前班次内反馈和关键风险项 2h 更新，但当前未看到反馈时间戳或状态 [Done]\n- Recovery Metric Check: Flow 07 定义了 WIP ratio、Queue、Move-Out、Tool Active、下游 Starvation、Hot Lot / Super Hot Run 风险，但当前缺少处置后观测值 [Done]\n- WIP / Queue Trend: 未看到处置后 WIP / Queue 停止恶化或回落的证据 [Done]\n- Downstream Risk Check: 未看到下游 Starvation 是否缓解或继续扩大的反馈 [Done]\n- Rollback / Escalation Decision: 证据不足，暂不建议进入观察；需要补齐角色反馈与恢复指标 [Done]\n- Next Flow Gate: 暂不进入 Flow 09，保持 On Hold 等待补证 [Done]\n\n### Agent 观察结果\n- Flow 07 已定义任务包和恢复指标，但 Flow 08 所需的反馈结果尚未出现。\n- 当前不能确认处置初步有效，也不能判断需要回退或升级。\n\n### Agent 分析判断\n本阶段判断为证据不足。需要先补齐角色反馈、SLA 状态和处置后恢复指标，再重新执行效果确认。\n\n### Agent 阶段输出\n输出 On Hold 结论和待补证据清单，暂不进入 Flow 09。\n\n### AI Agent\n建议先收集各角色反馈、恢复指标观测值和下游风险状态，再进行下一轮处置效果确认。\n\n## 当前阶段结果\n### 业务结果\n- Effect Confirmation Status: 证据不足，待补齐角色反馈与恢复指标\n- Feedback Status: 未看到角色初步反馈证据\n- Recovery Evidence: 未看到处置后 WIP / Queue / Move-Out / Tool / Downstream 观测值\n- Risk Decision: 暂不进入观察，保持 On Hold\n- Missing Evidence: 角色反馈、SLA 状态、恢复指标观测值、下游风险状态\n- Next Flow: null\n\n### 本阶段结论\n- 当前不能确认处置初步有效；需要补证后再判断是否进入 Flow 09。\n\n### Agent 判断逻辑\n- Flow 07 给出的是协同任务建议和恢复指标口径，不等同于任务反馈或处置结果。\n- Flow 08 需要处置后的实际反馈与指标变化，当前输入不足以支持进入观察。\n\n### 状态与门禁\n- Next Flow: On Hold\n- Gate: 初步效果证据充分后进入影响消除观察\n\n### 关键证据\n- Flow 07 已定义协同任务和恢复指标。\n- 当前未见角色反馈、SLA 状态和处置后恢复指标。\n- 缺少下游风险是否缓解的证据。",
+  "content": {
+    "title": "08 处置效果确认",
+    "containers": [
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {"label": "Case ID", "value": "demo-case-flow-08"},
+              {"label": "Stage", "value": "DNW-ANN"}
+            ]
+          },
+          {
+            "title": "Case Risk Snapshot｜异常发生时（风险快照）",
+            "items": [
+              {"label": "Prior Flow", "value": "Flow 07 已生成工程问题包与协同任务建议"},
+              {"label": "Evidence Status", "value": "当前缺少处置后反馈和恢复指标证据"}
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {"title": "系统 / 用户触发", "items": ["Flow 07 已生成工程问题包与协同任务，现在进入 Flow 08 处置效果确认。"]},
+          {"title": "Agent 接管", "items": ["检查协同任务反馈、SLA、恢复指标和风险扩散信号，判断是否具备进入 Flow 09 的条件。"]},
+          {"title": "Agent 思考过程", "items": ["任务建议不等同于已执行结果；只有看到角色反馈和恢复指标后，才能判断处置是否初步有效。"]},
+          {"title": "Agent 分析计划", "items": ["检查角色反馈、SLA 状态、恢复指标、下游风险和是否需要回退/升级。"]},
+          {
+            "title": "数据 / 工具调用",
+            "items": [
+              {"label": "Action Feedback Check", "value": "当前仅有 Flow 07 的任务建议，未看到角色完成初步反馈的证据", "status": "Done"},
+              {"label": "SLA Check", "value": "Flow 07 定义当前班次内反馈和关键风险项 2h 更新，但当前未看到反馈时间戳或状态", "status": "Done"},
+              {"label": "Recovery Metric Check", "value": "Flow 07 定义了 WIP ratio、Queue、Move-Out、Tool Active、下游 Starvation、Hot Lot / Super Hot Run 风险，但当前缺少处置后观测值", "status": "Done"},
+              {"label": "WIP / Queue Trend", "value": "未看到处置后 WIP / Queue 停止恶化或回落的证据", "status": "Done"},
+              {"label": "Downstream Risk Check", "value": "未看到下游 Starvation 是否缓解或继续扩大的反馈", "status": "Done"},
+              {"label": "Rollback / Escalation Decision", "value": "证据不足，暂不建议进入观察；需要补齐角色反馈与恢复指标", "status": "Done"},
+              {"label": "Next Flow Gate", "value": "暂不进入 Flow 09，保持 On Hold 等待补证", "status": "Done"}
+            ]
+          },
+          {"title": "Agent 观察结果", "items": ["Flow 07 已定义任务包和恢复指标，但 Flow 08 所需的反馈结果尚未出现。", "当前不能确认处置初步有效，也不能判断需要回退或升级。"]},
+          {"title": "Agent 分析判断", "items": ["本阶段判断为证据不足，需要先补齐角色反馈、SLA 状态和处置后恢复指标。"]},
+          {"title": "Agent 阶段输出", "items": ["输出 On Hold 结论和待补证据清单，暂不进入 Flow 09。"]},
+          {"title": "AI Agent", "items": ["建议先收集各角色反馈、恢复指标观测值和下游风险状态，再进行下一轮处置效果确认。"]}
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {
+            "title": "业务结果",
+            "items": [
+              {"label": "Effect Confirmation Status", "value": "证据不足，待补齐角色反馈与恢复指标"},
+              {"label": "Feedback Status", "value": "未看到角色初步反馈证据"},
+              {"label": "Recovery Evidence", "value": "未看到处置后 WIP / Queue / Move-Out / Tool / Downstream 观测值"},
+              {"label": "Risk Decision", "value": "暂不进入观察，保持 On Hold"},
+              {"label": "Missing Evidence", "value": "角色反馈、SLA 状态、恢复指标观测值、下游风险状态"}
+            ]
+          },
+          {"title": "本阶段结论", "items": ["当前不能确认处置初步有效；需要补证后再判断是否进入 Flow 09。"]},
+          {"title": "Agent 判断逻辑", "items": ["Flow 07 给出的是协同任务建议和恢复指标口径，不等同于任务反馈或处置结果。", "Flow 08 需要处置后的实际反馈与指标变化，当前输入不足以支持进入观察。"]},
+          {"title": "状态与门禁", "items": ["Next Flow: On Hold", "Gate: 初步效果证据充分后进入影响消除观察"]},
+          {"title": "关键证据", "items": ["Flow 07 已定义协同任务和恢复指标。", "当前未见角色反馈、SLA 状态和处置后恢复指标。", "缺少下游风险是否缓解的证据。"]}
+        ]
+      }
+    ]
+  }
+}
