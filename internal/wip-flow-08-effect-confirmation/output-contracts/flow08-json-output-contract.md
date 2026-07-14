@@ -19,7 +19,8 @@
     "containers": [
       {"title": "WIP Case Snapshot", "sections": [
         {"title": "Case Header", "items": [{"label": "Case ID", "value": "..."}]},
-        {"title": "Case Risk Snapshot｜异常发生时（风险快照）", "items": [{"label": "WIP", "value": "..."}]}
+        {"title": "Case Risk Snapshot｜异常发生时（风险快照）", "items": [{"label": "WIP", "value": "..."}]},
+        {"title": "Case Risk Trend｜处置后（恢复趋势）", "items": [{"label": "Actual WIP", "value": "8,050 -> 248 / Target 258", "meta": {"from": "8,050", "to": "248", "target": "258", "status": "Recovered", "tone": "down", "mocked": true}}]}
       ]},
       {"title": "当前阶段对话", "sections": [
         {"title": "系统 / 用户触发", "items": ["..."]},
@@ -55,9 +56,13 @@
 ## 校验要求
 
 - `content.containers` 恰好 3 个。
+- `WIP Case Snapshot.sections` 恰好 3 个，第三个必须是 `Case Risk Trend｜处置后（恢复趋势）`。
 - `当前阶段对话.sections` 恰好 9 个。
 - `当前阶段结果.sections` 恰好 5 个。
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
 - `数据 / 工具调用.items` 必须覆盖 Action Feedback Check、SLA Check、Recovery Metric Check、WIP / Queue Trend、Downstream Risk Check、Rollback / Escalation Decision 和 Next Flow Gate。
 - 禁止输出 `frontend_payload`、`frontend_demo`、`model_context`、`case_snapshot`、`prompt`、`mock`。
+- `Case Risk Trend｜处置后（恢复趋势）.items` 必须使用 `{label,value,meta}`，`value` 展示 `异常值 -> 正常值`，`meta` 包含 `from/to/status/tone/mocked`。
 - 禁止输出异常已完全恢复、Case 可关闭、已完成复盘、已完成处置或处置已生效。
+
+

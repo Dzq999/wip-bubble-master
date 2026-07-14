@@ -1,6 +1,12 @@
 {
   "effect_confirmation_framework": {
-    "default_status": "Evidence Pending",
+    "default_status": "Feedback Confirmed",
+    "feedback_assumption": "处置反馈已返回并完成初步确认",
+    "dynamic_recovery_rule": "无需 SQL 或额外脚本；只对前序中已异常的指标生成恢复后演示值，原本不异常的指标保持原值。Actual WIP 若高于 Target WIP，则恢复值取略低于 Target WIP。",
+    "case_risk_trend_style": {
+      "section_title": "Case Risk Trend｜处置后（恢复趋势）",
+      "item_shape": {"label": "指标名", "value": "异常值 -> 正常值", "meta": {"from": "异常值", "to": "正常值", "status": "Recovered | Stable", "tone": "down | up | complete", "mocked": true}}
+    },
     "confirmation_dimensions": [
       "角色反馈是否已返回",
       "临时措施是否仍在受控范围",
@@ -11,11 +17,11 @@
       "Hot Lot / Super Hot Run 是否仍被保护"
     ],
     "gate_to_flow09": "处置动作具备初步效果证据，且没有新增高风险扩散信号",
-    "hold_gate": "缺少角色反馈、缺少恢复指标或指标仍恶化时，不进入 Flow 09"
+    "hold_gate": "只有输入明确缺少角色反馈、缺少恢复指标或指标仍恶化时，不进入 Flow 09"
   },
   "guardrails": [
     "Flow 08 只确认初步效果，不宣布异常已完全恢复。",
-    "没有恢复后数据或角色反馈时，必须输出证据不足或 On Hold。",
-    "不能使用前端 demo 中不存在的恢复指标值。"
+    "默认假设处置反馈已返回并完成初步确认，生成进入 Flow 09 的处置效果确认结果。",
+    "不能使用前端 demo 中不存在的恢复指标值；恢复值必须来自 dynamic_recovery_mock 或前序 content。"
   ]
 }

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -173,6 +174,129 @@ def iter_content_items(value: Any) -> list[Dict[str, Any]]:
         for item in value:
             found.extend(iter_content_items(item))
     return found
+def _parse_number(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    text = str(value).replace(",", "")
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    if not match:
+        return None
+    return float(match.group(0))
+
+
+def _format_number(value: float) -> str:
+    if abs(value - round(value)) < 0.001:
+        return f"{int(round(value)):,}"
+    return f"{value:,.1f}"
+
+
+def _find_latest_labeled_value(previous_flow_contents: list[Dict[str, Any]], label_keyword: str) -> Optional[str]:
+    keyword = label_keyword.lower()
+    for summary in reversed(previous_flow_contents):
+        for item in iter_content_items(summary.get("content", {})):
+            label = str(item.get("label") or "").strip().lower()
+            value = str(item.get("value") or "").strip()
+            if keyword in label and value:
+                return value
+    return None
+
+
+def _extract_snapshot_text(previous_flow_contents: list[Dict[str, Any]]) -> str:
+    for summary in previous_flow_contents:
+        if str(summary.get("flow_no") or "") != "01":
+            continue
+        return json.dumps(summary.get("content", {}), ensure_ascii=False)
+    return json.dumps([summary.get("content", {}) for summary in previous_flow_contents], ensure_ascii=False)
+
+
+def build_dynamic_recovery_mock(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+    """Build demo recovery values only for metrics that were abnormal in prior content."""
+    text = _extract_snapshot_text(previous_flow_contents)
+    trend_items: list[Dict[str, Any]] = []
+
+    actual = _parse_number(_find_latest_labeled_value(previous_flow_contents, "Actual WIP"))
+    target = _parse_number(_find_latest_labeled_value(previous_flow_contents, "Target WIP"))
+    if actual is None or target is None:
+        match = re.search(r"Actual\s+WIP\s*[=:]?\s*([\d,]+(?:\.\d+)?)\D+Target\s+WIP\s*[=:]?\s*([\d,]+(?:\.\d+)?)", text, flags=re.IGNORECASE)
+        if not match:
+            match = re.search(r"Actual\s+([\d,]+(?:\.\d+)?)\s*/\s*Target\s+([\d,]+(?:\.\d+)?)", text, flags=re.IGNORECASE)
+        if match:
+            actual = float(match.group(1).replace(",", ""))
+            target = float(match.group(2).replace(",", ""))
+    if actual is not None and target is not None and target > 0:
+        if actual > target:
+            recovered = round(max(0, target * 0.96))
+            trend_items.append({
+                "label": "Actual WIP",
+                "value": f"{_format_number(actual)} -> {_format_number(recovered)} / Target {_format_number(target)}",
+                "meta": {"from": _format_number(actual), "to": _format_number(recovered), "target": _format_number(target), "status": "Recovered", "tone": "down", "mocked": True},
+            })
+        else:
+            trend_items.append({
+                "label": "Actual WIP",
+                "value": f"{_format_number(actual)} / Target {_format_number(target)}，原本未异常，保持观测值",
+                "meta": {"from": _format_number(actual), "to": _format_number(actual), "target": _format_number(target), "status": "Stable", "tone": "complete", "mocked": False},
+            })
+
+    queue_value = _find_latest_labeled_value(previous_flow_contents, "Queue")
+    queue_ratio = None
+    if queue_value:
+        ratio_match = re.search(r"(\d+(?:\.\d+)?)\s*%", queue_value)
+        if ratio_match:
+            queue_ratio = float(ratio_match.group(1))
+    if queue_ratio is not None and queue_ratio >= 80:
+        recovered_ratio = 42.0
+        trend_items.append({
+            "label": "Queue Ratio",
+            "value": f"{queue_ratio:g}% -> {recovered_ratio:g}%",
+            "meta": {"from": f"{queue_ratio:g}%", "to": f"{recovered_ratio:g}%", "status": "Recovered", "tone": "down", "mocked": True},
+        })
+    elif queue_ratio is not None:
+        trend_items.append({
+            "label": "Queue Ratio",
+            "value": f"{queue_ratio:g}%，原本未异常，保持观测值",
+            "meta": {"from": f"{queue_ratio:g}%", "to": f"{queue_ratio:g}%", "status": "Stable", "tone": "complete", "mocked": False},
+        })
+
+    move_out_text = _find_latest_labeled_value(previous_flow_contents, "Move-Out") or ""
+    move_match = re.search(r"(\d+(?:\.\d+)?)\s*%", move_out_text)
+    if move_match:
+        move_out = float(move_match.group(1))
+        if move_out < 90:
+            trend_items.append({
+                "label": "Move-Out",
+                "value": f"{move_out:g}% Plan -> 96% Plan",
+                "meta": {"from": f"{move_out:g}% Plan", "to": "96% Plan", "status": "Recovered", "tone": "up", "mocked": True},
+            })
+        else:
+            trend_items.append({
+                "label": "Move-Out",
+                "value": f"{move_out:g}% Plan，原本未异常，保持观测值",
+                "meta": {"from": f"{move_out:g}% Plan", "to": f"{move_out:g}% Plan", "status": "Stable", "tone": "complete", "mocked": False},
+            })
+
+    downstream_text = _find_latest_labeled_value(previous_flow_contents, "Downstream") or text
+    if "Starvation" in downstream_text or "starvation" in downstream_text.lower() or "断流" in downstream_text:
+        trend_items.append({
+            "label": "Downstream Supply",
+            "value": "Starvation -> Need Further Review",
+            "meta": {"from": "Starvation", "to": "Need Further Review", "status": "Recovered", "tone": "up", "mocked": True},
+        })
+
+    q_time_text = _find_latest_labeled_value(previous_flow_contents, "Q-Time") or ""
+    if "High" in q_time_text or "high" in q_time_text.lower():
+        trend_items.append({
+            "label": "Q-Time",
+            "value": "High -> Normal Watch",
+            "meta": {"from": "High", "to": "Normal Watch", "status": "Recovered", "tone": "complete", "mocked": True},
+        })
+
+    return {
+        "feedback_assumption": "处置反馈已返回并完成初步确认",
+        "mock_rule": "只对前序中已异常的指标生成恢复后演示值；原本不异常的指标保持原值。",
+        "case_risk_trend_section_title": "Case Risk Trend｜处置后（恢复趋势）",
+        "trend_items": trend_items,
+    }
 
 
 def extract_flow07_recovery_context(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
@@ -207,7 +331,7 @@ def extract_flow07_recovery_context(previous_flow_contents: list[Dict[str, Any]]
 def build_flow08_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
     return {
         "flow08_inputs": load_flow_mock(),
-        "derived_context": {"flow07_recovery_context": extract_flow07_recovery_context(previous_flow_contents)},
+        "derived_context": {"flow07_recovery_context": extract_flow07_recovery_context(previous_flow_contents), "dynamic_recovery_mock": build_dynamic_recovery_mock(previous_flow_contents)},
     }
 
 
@@ -227,9 +351,10 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "output_contracts": load_output_contracts(),
         "generation_rules": [
             "只从 previous_flows[].content 和 flow08_inputs 获取事实与门禁规则；不要读取或返回旧 Flow 08 结果。",
-            "Flow 08 只确认初步处置效果，不宣布异常已完全恢复，不关闭 Case，不做复盘。",
-            "没有角色反馈或恢复指标证据时，必须设置 case_status=On Hold、next_flow_no=null。",
-            "只有具备初步效果证据且无新增扩散风险时，才允许进入 Flow 09 影响消除观察。",
+            "Flow 08 默认按处置反馈已返回并完成初步确认来生成演示结果，但仍只能写初步有效和进入观察。",
+            "异常数据恢复部分使用 dynamic_recovery_mock：只对前序异常指标生成恢复后演示值，原本不异常的指标保持原值。",
+            "WIP Case Snapshot 必须包含 Case Risk Trend｜处置后（恢复趋势），展示异常值 -> 正常值。",
+            "只有输入明确缺少反馈或恢复指标证据时，才设置 case_status=On Hold、next_flow_no=null。",
             "脚本不构造最终展示结构或固定话术。",
         ],
         "output_language": "zh-CN",
@@ -237,7 +362,7 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
 
 
 REQUIRED_CONTENT_SHAPE = [
-    ("WIP Case Snapshot", ["Case Header", "Case Risk Snapshot｜异常发生时（风险快照）"]),
+    ("WIP Case Snapshot", ["Case Header", "Case Risk Snapshot｜异常发生时（风险快照）", "Case Risk Trend｜处置后（恢复趋势）"]),
     (
         "当前阶段对话",
         ["系统 / 用户触发", "Agent 接管", "Agent 思考过程", "Agent 分析计划", "数据 / 工具调用", "Agent 观察结果", "Agent 分析判断", "Agent 阶段输出", "AI Agent"],
@@ -480,3 +605,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
