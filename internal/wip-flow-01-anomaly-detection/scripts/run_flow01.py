@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """Flow 01: prepare raw inputs for agent-generated anomaly discovery output."""
 
 from __future__ import annotations
@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+
+sys.dont_write_bytecode = True
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -14,6 +16,7 @@ from typing import Any, Dict, Optional
 INTERNAL_DIR = Path(__file__).resolve().parents[2]
 SKILL_DIR = INTERNAL_DIR.parent
 DATA_SCRIPT_DIR = INTERNAL_DIR / "wip-data-query" / "scripts"
+SNAPSHOT_SCRIPT_DIR = INTERNAL_DIR / "wip-case-snapshot" / "scripts"
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "flow01_result_prompt.md"
 OUTPUT_CONTRACT_DIR = Path(__file__).resolve().parents[1] / "output-contracts"
 TEXT_OUTPUT_CONTRACT_PATH = OUTPUT_CONTRACT_DIR / "flow01-text-output-contract.md"
@@ -22,8 +25,10 @@ GLOBAL_KNOWLEDGE_DIR = SKILL_DIR / "knowledge"
 FLOW_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 FLOW_MOCK_PATH = Path(__file__).resolve().parents[1] / "data" / "flow01_mock.json"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
+sys.path.insert(0, str(SNAPSHOT_SCRIPT_DIR))
 
-from query_data import dumps, save_case_flow_record  # noqa: E402
+from build_snapshot import build_case_snapshot  # noqa: E402
+from query_data import canonicalize_case_data_snapshot, collect_case_data_snapshot, dumps, save_case_flow_record  # noqa: E402
 
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
@@ -32,6 +37,20 @@ FLOW_NAME = "异常发现"
 NEXT_FLOW_NO = "02"
 NEXT_FLOW_NAME = "异常确认"
 BUBBLE_STATUSES = {"WIP Bubble", "严重 WIP Bubble"}
+INTERNAL_RESPONSE_KEYS = {"case_data_snapshot"}
+
+
+def public_result(value: Any) -> Any:
+    """Keep the SQL snapshot in persistence while excluding it from visible output."""
+    if isinstance(value, dict):
+        return {
+            key: public_result(item)
+            for key, item in value.items()
+            if key not in INTERNAL_RESPONSE_KEYS
+        }
+    if isinstance(value, list):
+        return [public_result(item) for item in value]
+    return value
 
 
 def _drop_empty(value: Any) -> Any:
@@ -97,6 +116,7 @@ def build_model_context(
     case_id: str,
     high_wip: Optional[Dict[str, Any]] = None,
     case_snapshot: Optional[Dict[str, Any]] = None,
+    case_data_snapshot: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Return raw SQL/mock/context only; the agent owns extraction, wording, and decisions."""
     warehouse_high_wip = high_wip if high_wip is not None else _snapshot_high_wip(case_snapshot)
@@ -109,9 +129,14 @@ def build_model_context(
         "raw_inputs": {
             "warehouse_high_wip": warehouse_high_wip or {},
             "case_snapshot": case_snapshot or {},
+            "case_data_snapshot": case_data_snapshot or {},
+            # Keep this variable supplement visible at one stable path for any executor.
+            "snapshot_mock": ((case_snapshot or {}).get("snapshot_inputs") or {}).get("snapshot_mock") or {},
             "flow_mock": load_flow_mock(),
         },
         "generation_rules": [
+            "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
+            "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
             "当前 Agent 自己根据 raw_inputs 提取字段、做业务判断并组织 text/content 轻量结构。",
             "示例输入输出只用于结构参考，标题可以一致，正文不要原文照抄，也不要拼凑字段；内容要围绕本次 raw_inputs 形成连贯分析。",
             "脚本不构造最终展示结构或固定话术。",
@@ -186,7 +211,7 @@ def load_model_output(value: Optional[str]) -> Optional[Dict[str, Any]]:
     if value == "-":
         raw = sys.stdin.read()
     elif value.startswith("@"):
-        raw = Path(value[1:]).read_text(encoding="utf-8-sig")
+        raise ValueError("File-based JSON inputs are disabled; pass inline JSON or stdin.")
     else:
         raw = value
     return _extract_json_object(raw.lstrip("\ufeff"))
@@ -242,6 +267,16 @@ def validate_content_contract(content: Dict[str, Any]) -> None:
             items = section.get("items")
             if not isinstance(items, list) or not items:
                 raise ValueError(f"{expected_title}.{expected_section_title}.items must be a non-empty list")
+
+def final_public_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Return the exact visible payload only after verifying its full content contract."""
+    visible_result = public_result(result)
+    content = visible_result.get("content")
+    if not isinstance(content, dict):
+        raise RuntimeError("Flow 01 final result is missing visible content")
+    validate_content_contract(content)
+    return visible_result
+
 
 def stringify_display_item(item: Any) -> str:
     if isinstance(item, dict):
@@ -358,9 +393,10 @@ def compose_flow01_result(
     case_id: str,
     high_wip: Optional[Dict[str, Any]] = None,
     case_snapshot: Optional[Dict[str, Any]] = None,
+    case_data_snapshot: Optional[Dict[str, Any]] = None,
     model_output: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    context = build_model_context(case_id, high_wip=high_wip, case_snapshot=case_snapshot)
+    context = build_model_context(case_id, high_wip=high_wip, case_snapshot=case_snapshot, case_data_snapshot=case_data_snapshot)
 
     if model_output is None:
         return {
@@ -379,6 +415,7 @@ def compose_flow01_result(
             "prompt": load_prompt(),
             "output_contracts": load_output_contracts(),
             "case_snapshot": case_snapshot,
+            "case_data_snapshot": case_data_snapshot or {},
         }
 
     generated = normalize_model_output(model_output)
@@ -395,6 +432,7 @@ def compose_flow01_result(
         "bubble_status": generated.get("bubble_status"),
         "text": generated["text"],
         "content": generated["content"],
+        "case_data_snapshot": case_data_snapshot or {},
     }
 
 
@@ -402,6 +440,7 @@ def run(
     case_id: Optional[str] = None,
     case_snapshot: Optional[Dict[str, Any]] = None,
     high_wip: Optional[Dict[str, Any]] = None,
+    case_data_snapshot: Optional[Dict[str, Any]] = None,
     model_output: Optional[Dict[str, Any]] = None,
     save: bool = True,
 ) -> Dict[str, Any]:
@@ -410,6 +449,7 @@ def run(
         real_case_id,
         high_wip=high_wip,
         case_snapshot=case_snapshot,
+        case_data_snapshot=case_data_snapshot,
         model_output=model_output,
     )
     if save and result.get("ok", True):
@@ -426,54 +466,110 @@ def run(
         )
         if not save_result.get("saved"):
             raise RuntimeError(f"Failed to save case flow record: {save_result}")
+    if result.get("ok", True):
+        return final_public_result(result)
     return result
+
+
+def build_case_start_inputs(
+    case_id: str,
+    case_data_snapshot: Optional[Dict[str, Any]] = None,
+) -> tuple[Optional[Dict[str, Any]], Dict[str, Any], Dict[str, Any]]:
+    """Use the same one-time SQL snapshot path when Flow 01 is debugged directly."""
+    snapshot = canonicalize_case_data_snapshot(case_data_snapshot or collect_case_data_snapshot())
+    sql_results = snapshot.get("sql_results") if isinstance(snapshot, dict) else {}
+    sql_results = sql_results if isinstance(sql_results, dict) else {}
+    high_wip = sql_results.get("locate_high_wip_stage")
+    downstream_starvation = sql_results.get("locate_downstream_starvation")
+    return (
+        high_wip if isinstance(high_wip, dict) else None,
+        build_case_snapshot(
+            case_id,
+            flow_no=FLOW_NO,
+            flow_name=FLOW_NAME,
+            warehouse_high_wip=high_wip if isinstance(high_wip, dict) else None,
+            downstream_starvation=downstream_starvation if isinstance(downstream_starvation, dict) else None,
+        ),
+        snapshot if isinstance(snapshot, dict) else {},
+    )
 
 def render(result: Dict[str, Any], return_type: str) -> str:
     if result.get("reason") == "model_output_required":
-        return dumps({
+        return dumps(public_result({
             "internal_only": True,
             "reason": result.get("reason"),
             "model_context": result.get("model_context"),
             "prompt": result.get("prompt"),
             "case_snapshot": result.get("case_snapshot"),
-        })
+            "case_data_snapshot": result.get("case_data_snapshot"),
+        }))
+    visible_result = final_public_result(result)
     if return_type == "json":
-        return dumps(result)
+        return dumps(visible_result)
     if return_type == "both":
-        return result["text"] + "\n\n```json\n" + dumps(result) + "\n```"
-    return result["text"]
+        return "## 可读 Markdown\n\n" + visible_result["text"] + "\n\n## 结构化 JSON\n\n```json\n" + dumps(visible_result) + "\n```"
+    return visible_result["text"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run WIP Bubble Flow 01.")
     parser.add_argument("--case-id")
     parser.add_argument("--return-type", choices=["text", "json", "both"], default="text")
-    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin or '@path' for a file.")
+    parser.add_argument(
+        "--case-data-snapshot-json",
+        help="Existing case_data_snapshot JSON. Omit to collect the one-time SQL snapshot for this new Flow 01 case.",
+    )
+    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin; file paths are disabled.")
     parser.add_argument("--emit-model-context", action="store_true", help="Only print model context and prompt; do not save case record.")
     parser.add_argument("--validate-only", action="store_true", help="Validate --model-output-json shape without saving or rendering business output.")
     args = parser.parse_args()
 
     real_case_id = args.case_id or str(uuid.uuid4())
-    if args.emit_model_context:
-        context = build_model_context(real_case_id)
-        print(dumps({"prompt": load_prompt(),
-            "output_contracts": load_output_contracts(), "model_context": context}))
-        return
-
-    model_output = load_model_output(args.model_output_json)
     if args.validate_only:
+        model_output = load_model_output(args.model_output_json)
         if model_output is None:
             raise SystemExit("--model-output-json is required with --validate-only")
         normalize_model_output(model_output)
         print(dumps({"ok": True, "validated": True}))
         return
 
-    result = run(real_case_id, model_output=model_output)
+    supplied_snapshot = load_model_output(args.case_data_snapshot_json)
+    high_wip, case_snapshot, case_data_snapshot = build_case_start_inputs(real_case_id, supplied_snapshot)
+    if args.emit_model_context:
+        context = build_model_context(
+            real_case_id,
+            high_wip=high_wip,
+            case_snapshot=case_snapshot,
+            case_data_snapshot=case_data_snapshot,
+        )
+        print(dumps({"prompt": load_prompt(),
+            "output_contracts": load_output_contracts(), "model_context": context}))
+        return
+
+    model_output = load_model_output(args.model_output_json)
+
+    result = run(
+        real_case_id,
+        high_wip=high_wip,
+        case_snapshot=case_snapshot,
+        case_data_snapshot=case_data_snapshot,
+        model_output=model_output,
+    )
     print(render(result, args.return_type))
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
 
 
 

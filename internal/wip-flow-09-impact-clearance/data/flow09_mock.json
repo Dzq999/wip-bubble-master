@@ -1,0 +1,24 @@
+{
+  "observation_assumption": "Flow 08 的恢复趋势已经形成，Flow 09 默认假设影响消除观察通过。",
+  "observation_window": "观察窗口内未发现复发信号",
+  "case_risk_trend_style": {
+    "section_title": "Case Risk Trend｜影响消除观察（稳定趋势）",
+    "snapshot_rule": "Flow 09 的 WIP Case Snapshot 仍然只有 Case Header 和 Case Risk Trend 两段；Case Risk Trend 展示恢复后稳定观察。"
+  },
+  "observation_dimensions": [
+    "WIP / Queue 稳定性",
+    "Move-Out 恢复稳定性",
+    "下游供料风险是否转移",
+    "处置副作用检查",
+    "临时控制释放准备度"
+  ],
+  "gate_rules": {
+    "gate_to_flow10": "影响消除观察通过，未发现复发、下游转移或处置副作用，进入 Case 关闭确认",
+    "hold_gate": "只有输入明确存在复发、转移风险、处置副作用或观察证据不足时，不进入 Flow 10"
+  },
+  "forbidden_claims": [
+    "Flow 09 不关闭 Case。",
+    "Flow 09 不做复盘沉淀。",
+    "Flow 09 不确认最终根因。"
+  ]
+}

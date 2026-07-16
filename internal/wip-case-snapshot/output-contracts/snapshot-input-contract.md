@@ -1,4 +1,4 @@
-﻿# WIP Case Snapshot Input Contract
+# WIP Case Snapshot Input Contract
 
 本文件是 `wip-case-snapshot` 的原始数据包契约。该模块不是最终展示生成器，只负责把 SQL 原始结果和 mock 数据整理成稳定输入包，供 Flow Agent 生成最终 `WIP Case Snapshot`、文本和前端 JSON。
 

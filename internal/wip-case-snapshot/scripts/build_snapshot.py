@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """Prepare raw WIP case snapshot inputs for the agent/model."""
 
 from __future__ import annotations
@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Any, Dict, Optional
 

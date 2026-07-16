@@ -1,14 +1,14 @@
 {
   "ok": true,
-  "case_id": "CASE-WIP-DNW-ANN-001",
+  "case_id": "<运行时 case_id>",
   "flow_no": "02",
-  "flow_name": "异常确认",
+  "flow_name": "<运行时事实>",
   "flow_status": "Closed",
   "case_status": "Processing",
   "next_flow_no": "03",
-  "next_flow_name": "临时措施",
-  "confirmation_status": "异常确认成立",
-  "text": "# 02 异常确认\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: CASE-WIP-DNW-ANN-001\n- Priority: P1\n- Object: DNW-ANN Stage\n- Case Type: 严重 WIP Bubble\n- Occur Time: 2026-04-07 15:45:26\n- Operator: Wang Fei\n- Current Stage: 02 异常确认\n- Case Age: 3.5h\n- Stage Elapsed: 22min\n- SLA Remaining: 18min\n- Owner: MFG / Case Owner\n- Status: Processing\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- WIP: Actual 8,050 / Target 258\n- Queue: 8,000 / 99.38%\n- Eligible Tool: 2 / 8, 92% Tool Uptime\n- Move-Out: 73% Plan, Gap -320\n- Q-Time: High, Min Remain 1.8h\n- Downstream: Next Stage = PW-PH; Status = Starvation\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 01 已生成 DNW-ANN Stage 严重 WIP Bubble 事件，现在进入 Flow 02 做成立性校验。\n\n### Agent 接管\n我接管异常确认环节，先排除数据延迟、统计口径偏差、Target 无效和重复 Case，再决定是否允许进入后续处置。\n\n### Agent 思考过程\n异常发现已经成立，但在进入临时措施前，需要确认这不是一次刷新滞后、配置异常或短时波动造成的误报。\n\n### Agent 分析计划\n- 核对 WIP 数据刷新时间是否在允许窗口内。\n- 确认 Actual WIP 使用 Stage WIP 统计口径。\n- 校验 Target WIP 是否存在且大于 0。\n- 检查异常持续时长是否超过确认窗口。\n- 搜索是否存在同类未关闭 Case。\n\n### 数据 / 工具调用\n- Data Freshness Check: 数据刷新正常 [Done]\n- Metric Scope Check: Stage WIP [Done]\n- Target WIP Query: Target WIP = 258，有效 [Done]\n- Open Case Search: 无重复 Case [Done]\n\n### Agent 观察结果\n- 当前快照数据可用于确认判断，没有发现刷新超时信号。\n- Actual WIP 使用 Stage 粒度，和 Flow 01 的 WIP Bubble 判断口径一致。\n- Target WIP 为 258，配置有效；当前 Actual WIP 仍显著高于 Target。\n- 异常已持续 3.5h，超过 30min 确认窗口。\n- 没有检索到同一 Stage、同一异常类型的未关闭 Case。\n\n### Agent 分析判断\n成立性校验全部通过：DNW-ANN 的高 WIP 不属于数据延迟、口径错误、Target 缺失、短时波动或重复建案，应作为真实 WIP Bubble Case 继续推进。\n\n### Agent 阶段输出\n异常确认成立，Case 保持 Processing，建议进入 Flow 03 临时措施。\n\n### AI Agent\n是否进入 03 临时措施？下一阶段只制定短期止血动作，不直接输出最终根因。\n\n## 当前阶段结果\n### 业务结果\n- Confirmation Status: 异常确认成立\n- Data Freshness: 数据刷新正常\n- Metric Scope: Stage WIP\n- Target Validity: 有效\n- Duration: 3.5h / Min 30min\n- Duplicate Case: 无重复 Case\n\n### 本阶段结论\n- DNW-ANN Stage 的严重 WIP Bubble 通过成立性确认。\n- 当前 Case 可以从异常确认推进到临时措施阶段。\n\n### Agent 判断逻辑\n- 数据刷新正常，因此不按刷新延迟误报处理。\n- 指标口径为 Stage WIP，Target WIP 为 258 且有效，WIP Bubble 判断基础成立。\n- 异常持续 3.5h，已经超过确认窗口；同时未发现重复 Case。\n\n### 状态与门禁\n- Next Flow: 03 临时措施\n- Gate: MFG / Shift 确认异常成立\n\n### 关键证据\n- Data Freshness Check 返回数据刷新正常。\n- Metric Scope Check 确认为 Stage WIP。\n- Target WIP Query 返回 Target WIP = 258，有效。\n- Open Case Search 未发现同类未关闭 Case。\n",
+  "next_flow_name": "<运行时事实>",
+  "confirmation_status": "<运行时事实>",
+  "text": "<运行时生成的完整 Markdown；仅使用 model_context.raw_inputs 事实。>",
   "content": {
     "title": "02 异常确认",
     "containers": [
@@ -18,29 +18,91 @@
           {
             "title": "Case Header",
             "items": [
-              {"label": "Case ID", "value": "CASE-WIP-DNW-ANN-001"},
-              {"label": "Priority", "value": "P1"},
-              {"label": "Object", "value": "DNW-ANN Stage"},
-              {"label": "Case Type", "value": "严重 WIP Bubble"},
-              {"label": "Occur Time", "value": "2026-04-07 15:45:26"},
-              {"label": "Operator", "value": "Wang Fei"},
-              {"label": "Current Stage", "value": "02 异常确认"},
-              {"label": "Case Age", "value": "3.5h"},
-              {"label": "Stage Elapsed", "value": "22min"},
-              {"label": "SLA Remaining", "value": "18min"},
-              {"label": "Owner", "value": "MFG / Case Owner"},
-              {"label": "Status", "value": "Processing"}
+              {
+                "label": "Case ID",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Priority",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Object",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Case Type",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Occur Time",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Operator",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Current Stage",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Case Age",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Stage Elapsed",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "SLA Remaining",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Owner",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Status",
+                "value": "<运行时事实>"
+              }
             ]
           },
           {
             "title": "Case Risk Snapshot｜异常发生时（风险快照）",
             "items": [
-              {"label": "WIP", "value": "Actual 8,050 / Target 258", "tone": "risk"},
-              {"label": "Queue", "value": "8,000 / 99.38%", "tone": "risk"},
-              {"label": "Eligible Tool", "value": "2 / 8", "meta": "92% Tool Uptime"},
-              {"label": "Move-Out", "value": "73% Plan", "meta": "Gap -320"},
-              {"label": "Q-Time", "value": "High", "meta": "Min Remain 1.8h", "tone": "warn"},
-              {"label": "Downstream", "value": "Next Stage = PW-PH", "meta": "Status = Starvation", "tone": "warn"}
+              {
+                "label": "WIP",
+                "value": "<运行时事实>",
+                "tone": "risk"
+              },
+              {
+                "label": "Queue",
+                "value": "<运行时事实>",
+                "tone": "risk"
+              },
+              {
+                "label": "Eligible Tool",
+                "value": "<运行时事实>",
+                "meta": "<运行时补充事实>"
+              },
+              {
+                "label": "Move-Out",
+                "value": "<运行时事实>",
+                "meta": "<运行时补充事实>"
+              },
+              {
+                "label": "Q-Time",
+                "value": "<运行时事实>",
+                "meta": "<运行时补充事实>",
+                "tone": "warn"
+              },
+              {
+                "label": "Downstream",
+                "value": "<运行时事实>",
+                "meta": "<运行时补充事实>",
+                "tone": "warn"
+              }
             ]
           }
         ]
@@ -48,27 +110,156 @@
       {
         "title": "当前阶段对话",
         "sections": [
-          {"title": "系统 / 用户触发", "items": ["Flow 01 已生成 DNW-ANN Stage 严重 WIP Bubble 事件，现在进入 Flow 02 做成立性校验。"]},
-          {"title": "Agent 接管", "items": ["我接管异常确认环节，先排除数据延迟、统计口径偏差、Target 无效和重复 Case，再决定是否允许进入后续处置。"]},
-          {"title": "Agent 思考过程", "items": ["异常发现已经成立，但在进入临时措施前，需要确认这不是一次刷新滞后、配置异常或短时波动造成的误报。"]},
-          {"title": "Agent 分析计划", "items": ["核对 WIP 数据刷新时间是否在允许窗口内。", "确认 Actual WIP 使用 Stage WIP 统计口径。", "校验 Target WIP 是否存在且大于 0。", "检查异常持续时长是否超过确认窗口。", "搜索是否存在同类未关闭 Case。"]},
-          {"title": "数据 / 工具调用", "items": [{"label": "Data Freshness Check", "value": "数据刷新正常", "status": "Done"}, {"label": "Metric Scope Check", "value": "Stage WIP", "status": "Done"}, {"label": "Target WIP Query", "value": "Target WIP = 258，有效", "status": "Done"}, {"label": "Open Case Search", "value": "无重复 Case", "status": "Done"}]},
-          {"title": "Agent 观察结果", "items": ["当前快照数据可用于确认判断，没有发现刷新超时信号。", "Actual WIP 使用 Stage 粒度，和 Flow 01 的 WIP Bubble 判断口径一致。", "Target WIP 为 258，配置有效；当前 Actual WIP 仍显著高于 Target。", "异常已持续 3.5h，超过 30min 确认窗口。", "没有检索到同一 Stage、同一异常类型的未关闭 Case。"]},
-          {"title": "Agent 分析判断", "items": ["成立性校验全部通过：DNW-ANN 的高 WIP 不属于数据延迟、口径错误、Target 缺失、短时波动或重复建案，应作为真实 WIP Bubble Case 继续推进。"]},
-          {"title": "Agent 阶段输出", "items": ["异常确认成立，Case 保持 Processing，建议进入 Flow 03 临时措施。"]},
-          {"title": "AI Agent", "items": ["是否进入 03 临时措施？下一阶段只制定短期止血动作，不直接输出最终根因。"]}
+          {
+            "title": "系统 / 用户触发",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 接管",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 思考过程",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析计划",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "数据 / 工具调用",
+            "items": [
+              {
+                "label": "Data Freshness Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Metric Scope Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Target WIP Query",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Open Case Search",
+                "value": "<运行时事实>",
+                "status": "Done"
+              }
+            ]
+          },
+          {
+            "title": "Agent 观察结果",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析判断",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 阶段输出",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "AI Agent",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          }
         ]
       },
       {
         "title": "当前阶段结果",
         "sections": [
-          {"title": "业务结果", "items": [{"label": "Confirmation Status", "value": "异常确认成立", "tone": "risk"}, {"label": "Data Freshness", "value": "数据刷新正常"}, {"label": "Metric Scope", "value": "Stage WIP"}, {"label": "Target Validity", "value": "有效"}, {"label": "Duration", "value": "3.5h / Min 30min"}, {"label": "Duplicate Case", "value": "无重复 Case"}]},
-          {"title": "本阶段结论", "items": ["DNW-ANN Stage 的严重 WIP Bubble 通过成立性确认。", "当前 Case 可以从异常确认推进到临时措施阶段。"]},
-          {"title": "Agent 判断逻辑", "items": ["数据刷新正常，因此不按刷新延迟误报处理。", "指标口径为 Stage WIP，Target WIP 为 258 且有效，WIP Bubble 判断基础成立。", "异常持续 3.5h，已经超过确认窗口；同时未发现重复 Case。"]},
-          {"title": "状态与门禁", "items": ["Next Flow: 03 临时措施", "Gate: MFG / Shift 确认异常成立"]},
-          {"title": "关键证据", "items": ["Data Freshness Check 返回数据刷新正常。", "Metric Scope Check 确认为 Stage WIP。", "Target WIP Query 返回 Target WIP = 258，有效。", "Open Case Search 未发现同类未关闭 Case。"]}
+          {
+            "title": "业务结果",
+            "items": [
+              {
+                "label": "Confirmation Status",
+                "value": "<运行时事实>",
+                "tone": "risk"
+              },
+              {
+                "label": "Data Freshness",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Metric Scope",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Target Validity",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Duration",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Duplicate Case",
+                "value": "<运行时事实>"
+              }
+            ]
+          },
+          {
+            "title": "本阶段结论",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 判断逻辑",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "状态与门禁",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "关键证据",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          }
         ]
       }
     ]
-  }
+  },
+  "_template_only": "仅示范结构；运行时只能使用 model_context.raw_inputs，禁止引用本文件业务内容。"
 }

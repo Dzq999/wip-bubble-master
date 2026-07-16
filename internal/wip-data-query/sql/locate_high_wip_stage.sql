@@ -1,25 +1,42 @@
-SELECT
-  s.stage_name,
-  SUM(CASE WHEN s.lot_state IN ('wait', 'reserved', 'finished') THEN s.wafer_qty ELSE 0 END) AS queue_wip,
-  SUM(CASE WHEN s.lot_state IN ('wait', 'reserved', 'finished') THEN s.wafer_qty ELSE 0 END) /
-    NULLIF(SUM(CASE WHEN s.lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold') THEN s.wafer_qty ELSE 0 END), 0)
-    AS queue_actual_ratio,
-  SUM(CASE WHEN s.lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold') THEN s.wafer_qty ELSE 0 END) AS actual_wip,
-  MAX(target.plan_total_wip_qty) AS target_wip,
-  SUM(CASE WHEN s.lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold') THEN s.wafer_qty ELSE 0 END) /
-    NULLIF(MAX(target.plan_total_wip_qty), 0) AS wip_ratio,
-  SUM(CASE WHEN s.lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold') THEN s.wafer_qty ELSE 0 END) -
-    MAX(target.plan_total_wip_qty) AS wip_gap,
-  SUM(CASE WHEN s.lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold') THEN s.wafer_qty ELSE 0 END) /
-    NULLIF(MAX(target.plan_total_wip_qty), 0) - 1 AS wip_gap_rate,
-  NOW() AS update_time,
-  MAX(s.updated_time) AS biz_time
-FROM aifab.dim_wip_lot_rt s
-LEFT JOIN (
-  SELECT stage_name AS stage_code, SUM(target_wip) AS plan_total_wip_qty
-  FROM aifab.dim_wip_target
-  GROUP BY stage_name
-) target ON s.stage_name = target.stage_code
-GROUP BY s.stage_name
-ORDER BY wip_ratio DESC, wip_gap DESC
-LIMIT 1
+-- 数仓按stage查询当前actual wip/ target wip 及比率
+select s.stage_name                                                                                   -- 1. 异常对象(Stage)名称
+                       , SUM(IF(s.lot_state IN ('wait', 'reserved', 'finished'), s.wafer_qty, 0)) as `queue_wip`        -- 5. Queue值(mes中等待分为'wait', 'reserved', 'finished')
+                       , SUM(IF(s.lot_state IN ('wait', 'reserved', 'finished'), s.wafer_qty, 0)) /
+                         SUM(IF(lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold',
+                                              'inventory hold'),
+                                wafer_qty,
+                                0))                                                               as queue_actual_ratio -- 5. Queue值占比     Queue / actual
+                       , SUM(IF(
+            lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold'),
+            wafer_qty,
+            0))                                                                                   as actual_wip         -- 2. 实际在制品晶圆数
+                       , max(plan_total_wip_qty)                                                  as `target_wip`       -- 3. 理论在制品晶圆数
+                       , SUM(IF(
+            lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold'),
+            wafer_qty, 0)) /
+                         max(plan_total_wip_qty)                                                  as `wip_ratio`        -- 4. WIP 在制品晶圆数实际与理论比
+                       , SUM(IF(
+            lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold'),
+            wafer_qty, 0)) -
+                         max(plan_total_wip_qty)                                                  as wip_gap            -- 4. WIP Gap值 实际 - 理论
+                       , SUM(IF(
+            lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold', 'inventory hold'),
+            wafer_qty, 0)) / max(plan_total_wip_qty) - 1                                          as wip_gap_rate
+                       , now()                                                                    as `update_time`      -- 6. 当前查询时间
+                       , max(s.updated_time)                                                      as `biz_time`
+                  from aifab.dim_wip_lot_rt s
+                           left join
+                       (select stage_name as stage_code, sum(target_wip) as plan_total_wip_qty
+                        from aifab.dim_wip_target
+                        group by stage_name) target
+                       on s.stage_name = target.stage_code
+                  group by s.stage_name
+                  having (SUM(IF(lot_state IN ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold',
+                                               'inventory hold'),
+                                 wafer_qty, 0)) / max(plan_total_wip_qty)) > 1.5
+                  order by (SUM(IF(lot_state IN
+                                   ('running', 'wait', 'reserved', 'finished', 'hold', 'running hold',
+                                    'inventory hold'),
+                                   wafer_qty, 0)) / max(plan_total_wip_qty)) desc
+                  limit 1;
+

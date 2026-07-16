@@ -1,4 +1,4 @@
-﻿# Flow 01 JSON Output Contract - 异常发现
+# Flow 01 JSON Output Contract - 异常发现
 
 本文件只规定 Flow 01 给前端或编排层使用的轻量结构化 JSON。最终可见内容禁止出现 `mock` 字样；来自内部 mock 的字段也必须按业务口径表述为快照输入、补充信号或具体数据名称。禁止只输出摘要 JSON；`json` 或 `both` 中的 JSON 必须包含完整 `text` 和完整 `content.containers`。
 

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """Flow 02: prepare raw inputs for agent-generated anomaly confirmation output."""
 
 from __future__ import annotations
@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -100,7 +102,7 @@ def load_json_arg(value: Optional[str]) -> Optional[Dict[str, Any]]:
     if value == "-":
         raw = sys.stdin.read()
     elif value.startswith("@"):
-        raw = Path(value[1:]).read_text(encoding="utf-8-sig")
+        raise ValueError("File-based JSON inputs are disabled; pass inline JSON or stdin.")
     else:
         raw = value
     return _extract_json_object(raw.lstrip("\ufeff"))
@@ -139,6 +141,8 @@ def build_model_context(case_id: str, previous_record: Optional[Dict[str, Any]] 
         "knowledge_pack": load_knowledge_pack(),
         "output_contracts": load_output_contracts(),
         "generation_rules": [
+            "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
+            "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
             "优先从 Flow 01 保存结果中获取 WIP、Target、Queue、Case Header 和风险快照。",
             "Flow 02 只做数据刷新、指标口径、Target 有效性、异常持续时间和重复 Case 校验。",
             "前序结果和 SQL 都没有的数据才使用 flow02_mock；仍缺失则省略。",
@@ -301,15 +305,15 @@ def render(result: Dict[str, Any], return_type: str) -> str:
     if return_type == "json":
         return dumps(result)
     if return_type == "both":
-        return result["text"] + "\n\n```json\n" + dumps(result) + "\n```"
+        return "## 可读 Markdown\n\n" + result["text"] + "\n\n## 结构化 JSON\n\n```json\n" + dumps(result) + "\n```"
     return result["text"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run WIP Bubble Flow 02.")
     parser.add_argument("--case-id", required=True)
-    parser.add_argument("--previous-record-json", help="Previous Flow 01 record JSON. Use '-' for stdin or '@path' for a file.")
-    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin or '@path' for a file.")
+    parser.add_argument("--previous-record-json", help="Previous Flow 01 record JSON. Use '-' for stdin; file paths are disabled.")
+    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin; file paths are disabled.")
     parser.add_argument("--return-type", choices=["text", "json", "both"], default="text")
     parser.add_argument("--emit-model-context", action="store_true")
     parser.add_argument("--validate-only", action="store_true")

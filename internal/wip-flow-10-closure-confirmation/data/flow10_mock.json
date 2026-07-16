@@ -1,0 +1,23 @@
+{
+  "closure_assumption": "Flow 09 已经确认影响消除观察通过，Flow 10 默认假设关闭确认通过。",
+  "case_closure_checklist": {
+    "section_title": "Case Closure Checklist｜关闭确认",
+    "snapshot_rule": "Flow 10 的 WIP Case Snapshot 仍然只有 Case Header 和 Case Closure Checklist 两段；Checklist 展示关闭条件确认状态。"
+  },
+  "closure_dimensions": [
+    "协同任务完成",
+    "风险解除",
+    "恢复指标达标",
+    "受控动作关闭",
+    "责任人确认"
+  ],
+  "gate_rules": {
+    "gate_to_flow11": "关闭确认通过，进入 Case 复盘沉淀",
+    "hold_gate": "只有输入明确存在任务未完成、风险未解除、指标未恢复、受控动作未关闭或责任人未确认时，不进入 Flow 11"
+  },
+  "forbidden_claims": [
+    "Flow 10 不做复盘沉淀。",
+    "Flow 10 不写已完成案例沉淀。",
+    "Flow 10 不确认最终根因。"
+  ]
+}

@@ -7,6 +7,8 @@ import argparse
 import json
 import re
 import sys
+
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -23,16 +25,7 @@ FLOW_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 FLOW_MOCK_PATH = Path(__file__).resolve().parents[1] / "data" / "flow06_mock.json"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 
-from query_data import (  # noqa: E402
-    dumps,
-    locate_flow06_move_in_trend,
-    locate_flow06_move_out_trend,
-    locate_flow06_tool_efficiency,
-    locate_flow06_tool_efficiency_detail,
-    locate_flow06_tool_status,
-    locate_flow06_wip_hold_run,
-    save_case_flow_record,
-)
+from query_data import canonicalize_case_data_snapshot, dumps, save_case_flow_record  # noqa: E402
 
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
@@ -121,7 +114,7 @@ def load_json_arg(value: Optional[str]) -> Optional[Any]:
     if value == "-":
         raw = sys.stdin.read()
     elif value.startswith("@"):
-        raw = Path(value[1:]).read_text(encoding="utf-8-sig")
+        raise ValueError("File-based JSON inputs are disabled; pass inline JSON or stdin.")
     else:
         raw = value
     return _extract_json_value(raw.lstrip("\ufeff"))
@@ -171,6 +164,14 @@ def previous_content_summary(record: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
+
+def extract_case_data_snapshot(records: list[Dict[str, Any]]) -> Dict[str, Any]:
+    for record in records:
+        flow_data = parse_flow_data(record)
+        snapshot = flow_data.get("case_data_snapshot")
+        if isinstance(snapshot, dict) and snapshot:
+            return snapshot
+    return {}
 def iter_display_items(value: Any) -> list[Dict[str, str]]:
     found: list[Dict[str, str]] = []
     if isinstance(value, dict):
@@ -205,31 +206,34 @@ def derive_stage_name(previous_flow_contents: list[Dict[str, Any]], fallback: st
     return fallback
 
 
-def query_flow06_sql(stage_name: str) -> Dict[str, Any]:
+def query_flow06_sql(stage_name: str, case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    snapshot = case_data_snapshot if isinstance(case_data_snapshot, dict) else {}
+    sql_snapshot = snapshot.get("sql_results", {}) if isinstance(snapshot.get("sql_results"), dict) else {}
     return _drop_empty(
         {
-            "stage_name": stage_name,
-            "wip_hold_run": locate_flow06_wip_hold_run(stage_name),
-            "tool_status": locate_flow06_tool_status(stage_name),
-            "tool_efficiency": locate_flow06_tool_efficiency(stage_name),
-            "tool_efficiency_detail": locate_flow06_tool_efficiency_detail(stage_name),
-            "move_in_trend": locate_flow06_move_in_trend(stage_name),
-            "move_out_trend": locate_flow06_move_out_trend(stage_name),
+            "stage_name": snapshot.get("stage_name") or stage_name,
+            "wip_hold_run": sql_snapshot.get("locate_wip_hold_run"),
+            "tool_status": sql_snapshot.get("locate_tool_status"),
+            "tool_efficiency": sql_snapshot.get("locate_tool_efficiency"),
+            "tool_efficiency_detail": sql_snapshot.get("locate_tool_efficiency_detail"),
+            "move_in_trend": sql_snapshot.get("locate_move_in_trend"),
+            "move_out_trend": sql_snapshot.get("locate_move_out_trend"),
+            "source": "case_data_snapshot.sql_results",
         }
     )
 
 
-def build_flow06_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+def build_flow06_inputs(previous_flow_contents: list[Dict[str, Any]], case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     flow06_inputs = load_flow_mock()
     fallback_stage = str(flow06_inputs.get("root_cause_framework", {}).get("default_stage") or "DNW-ANN")
-    stage_name = derive_stage_name(previous_flow_contents, fallback=fallback_stage)
+    snapshot = case_data_snapshot if isinstance(case_data_snapshot, dict) else {}
+    stage_name = snapshot.get("stage_name") or derive_stage_name(previous_flow_contents, fallback=fallback_stage)
     return {
         "flow06_inputs": flow06_inputs,
         "derived_context": {"stage_name": stage_name},
-        "sql_results": query_flow06_sql(stage_name),
+        "case_data_snapshot": snapshot,
+        "sql_results": query_flow06_sql(stage_name, case_data_snapshot=snapshot),
     }
-
-
 def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> Dict[str, Any]:
     previous_records = normalize_previous_records(previous_record)
     previous_flow_contents = [previous_content_summary(record) for record in previous_records]
@@ -245,10 +249,12 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "knowledge_pack": load_knowledge_pack(),
         "output_contracts": load_output_contracts(),
         "generation_rules": [
-            "只从 previous_flows[].content 和 sql_results 获取事实；不要读取或返回旧 Flow 06 结果。",
+            "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
+            "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
+            "只从 previous_flows[].content 和 Flow 01 保存的 case_data_snapshot.sql_results 获取事实；不要实时查询 SQL，也不要读取或返回旧 Flow 06 结果。",
             "Flow 06 只做候选原因排查和证据链整理，不宣布最终根因已确认，不关闭 Case，不派发工程任务。",
-            "候选原因必须引用 WIP State、Tool Status、Tool Efficiency、Move-In Trend、Move-Out Trend 中的实际查询结果。",
-            "如果 SQL 结果与前序结论冲突，优先说明冲突和需要补证，不要硬判。",
+            "候选原因必须引用 case_data_snapshot.sql_results 中的 WIP State、Tool Status、Tool Efficiency、Move-In Trend、Move-Out Trend 数据。",
+            "如果 case_data_snapshot 与前序结论冲突，优先说明冲突和需要补证，不要硬判。",
             "脚本不构造最终展示结构或固定话术。",
         ],
         "output_language": "zh-CN",
@@ -456,15 +462,15 @@ def render(result: Dict[str, Any], return_type: str) -> str:
     if return_type == "json":
         return dumps(result)
     if return_type == "both":
-        return result["text"] + "\n\n```json\n" + dumps(result) + "\n```"
+        return "## 可读 Markdown\n\n" + result["text"] + "\n\n## 结构化 JSON\n\n```json\n" + dumps(result) + "\n```"
     return result["text"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run WIP Bubble Flow 06.")
     parser.add_argument("--case-id", required=True)
-    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin or '@path' for a file.")
-    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin or '@path' for a file.")
+    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin; file paths are disabled.")
+    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin; file paths are disabled.")
     parser.add_argument("--return-type", choices=["text", "json", "both"], default="text")
     parser.add_argument("--emit-model-context", action="store_true")
     parser.add_argument("--validate-only", action="store_true")
@@ -490,3 +496,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

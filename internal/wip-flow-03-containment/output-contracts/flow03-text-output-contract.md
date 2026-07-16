@@ -59,9 +59,10 @@ Flow 03 只完成“临时措施”：异常已确认成立后，在根因完全
 ## 内容要求
 
 - `系统 / 用户触发`：说明 Flow 02 已确认异常成立，需要先执行风险遏制；不要写成用户提问触发。
-- `数据 / 工具调用`：必须是事实值 + Done 状态，不要只写 Done；Hot Lot Query 来自 `locate_flow03_priority_lots.sql`，Downstream Risk Check 来自 `locate_downstream_starvation.sql`。
+- `数据 / 工具调用`：必须是事实值 + Done 状态，不要只写 Done；Hot Lot Query 来自 `locate_priority_lots.sql`，Downstream Risk Check 来自 `locate_downstream_starvation.sql`。
 - `Downstream Risk Check`：下游对象必须来自前序 `Downstream / Next Stage` 实际值；如果前序为 `PW-PH`，这里也必须写 `PW-PH`。
 - `Agent 分析判断`：只判断临时控制策略，不进入原因排查、影响范围量化或正式 Case 分级。
 - `状态与门禁`：只写 Next Flow 和 Gate，不展示 Flow Status / Case Status。
 - 高风险动作只能写成建议、通知、草案或待确认，不要写成 Agent 已直接修改生产主系统。
 - 如果临时措施不能执行，`case_status=On Hold`、`next_flow_no=null`，并说明阻塞原因。
+

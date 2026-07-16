@@ -1,4 +1,4 @@
-﻿# Flow 01 Text Output Contract - 异常发现
+# Flow 01 Text Output Contract - 异常发现
 
 本文件只规定 Flow 01 的用户可读 Markdown 文本输出结构。
 

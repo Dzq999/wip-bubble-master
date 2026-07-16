@@ -1,0 +1,31 @@
+{
+  "retrospective_assumption": "Flow 10 已经完成关闭确认，Flow 11 默认假设复盘沉淀完成。",
+  "retrospective_summary": {
+    "section_title": "Case Retrospective Summary｜复盘沉淀",
+    "snapshot_rule": "Flow 11 的 WIP Case Snapshot 仍然只有 Case Header 和 Case Retrospective Summary 两段；Summary 展示可沉淀结论。"
+  },
+  "retrospective_dimensions": [
+    "根因摘要",
+    "有效措施",
+    "无效或需改进措施",
+    "规则优化建议",
+    "案例标签",
+    "案例归档"
+  ],
+  "default_case_tags": [
+    "WIP Bubble",
+    "Move-In Surge",
+    "Downstream Starvation",
+    "Dispatch Control",
+    "Hot Lot Protection"
+  ],
+  "gate_rules": {
+    "final_close": "复盘沉淀完成后关闭 Case，next_flow_no=null",
+    "hold_gate": "只有输入明确缺少关闭确认或复盘信息不足时，保持 On Hold"
+  },
+  "forbidden_claims": [
+    "Flow 11 不输出新的现场处置指令。",
+    "Flow 11 不声称已经自动更新真实生产规则。",
+    "Flow 11 不重新打开 Case。"
+  ]
+}

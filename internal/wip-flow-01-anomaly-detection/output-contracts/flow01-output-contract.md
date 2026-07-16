@@ -1,4 +1,4 @@
-﻿# Flow 01 Output Contract Index
+# Flow 01 Output Contract Index
 
 Flow 01 输出契约已拆分为两个文件：
 

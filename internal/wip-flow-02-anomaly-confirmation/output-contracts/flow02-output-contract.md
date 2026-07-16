@@ -1,4 +1,4 @@
-﻿# Flow 02 Output Contract Index
+# Flow 02 Output Contract Index
 
 Flow 02 输出契约拆分为：
 

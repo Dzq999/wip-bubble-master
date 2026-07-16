@@ -1,13 +1,8 @@
 ﻿{
     "default":  {
-                    "occur_time":  "2026-04-07 15:45:26",
                     "operator":  "Wang Fei",
-                    "demo_mode":  true,
-                    "case_age":  "3.5h",
-                    "flow_elapsed":  "22min",
-                    "sla_remaining":  "18min",
+                    "case_age":  "6h",
                     "owner":  "MFG / Case Owner",
-                    "run_status":  "Ready",
                     "priority_by_status":  {
                                                "正常":  "P4",
                                                "正常偏高":  "P4",
@@ -18,29 +13,9 @@
                                                "数据异常":  "P3"
                                            },
                     "risk_snapshot":  {
-                                          "eligible_tool":  {
-                                                                "value":  "2 / 8",
-                                                                "meta":  "92% Tool Uptime"
-                                                            },
-                                          "move_out":  {
-                                                           "value":  "73% Plan",
-                                                           "meta":  "Gap -320"
-                                                       },
                                           "q_time":  {
-                                                         "value":  "High",
-                                                         "meta":  "Min Remain 1.8h"
+                                                         "value":  "High"
                                                      }
-                                      },
-                    "additional_case_metrics":  {
-                                                    "run_wip":  "400",
-                                                    "hold_wip":  "200",
-                                                    "impact_lot":  "42",
-                                                    "impact_wo":  "18",
-                                                    "hot_lot":  "2",
-                                                    "super_hot_run":  "3",
-                                                    "down_tool":  "None",
-                                                    "pm_tool":  "No bottleneck",
-                                                    "burndown_eta":  "38h"
-                                                }
+                                      }
                 }
 }

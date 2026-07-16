@@ -1,14 +1,14 @@
 {
   "ok": true,
-  "case_id": "demo-case-flow-06",
+  "case_id": "<运行时 case_id>",
   "flow_no": "06",
-  "flow_name": "异常原因排查",
+  "flow_name": "<运行时事实>",
   "flow_status": "Closed",
   "case_status": "Processing",
   "next_flow_no": "07",
-  "next_flow_name": "工程问题包与协同任务",
-  "root_cause_analysis_status": "已完成候选原因排查",
-  "text": "# 06 异常原因排查\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: demo-case-flow-06\n- Stage: DNW-ANN\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- 当前 Stage 已完成异常确认、临时措施、影响范围评估和 Case 分级。\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 05 已完成 Case 分级与处置判定，现在进入 Flow 06 异常原因排查。\n\n### Agent 接管\n我将结合前序结论和 Flow 06 SQL 查询结果，输出候选原因排序与待补证据。\n\n### Agent 思考过程\n当前排查重点不是重新判断异常是否成立，而是解释 WIP Bubble 为什么在当前 stage 扩大。\n\n### Agent 分析计划\n- 检查 Hold / Run WIP，判断是否存在可加工 WIP 被锁住。\n- 检查 Tool Status 与 Tool Efficiency，判断是否存在产能损失。\n- 对比 Move-In / Move-Out 趋势，判断是否存在流入流出节奏失衡。\n- 给出主候选、次候选和补证项。\n\n### 数据 / 工具调用\n- WIP State Check: Hold WIP = 25，Run WIP = 50，当前没有显示 Hold 大规模锁量 [Done]\n- Tool Status Check: Active = 2 / 2，Hard Down = 0，PM = 0，Tool Uptime = 100% [Done]\n- Tool Efficiency Check: AE = 100%，OE = 100%，Idle = 0h [Done]\n- Move-In Trend: 本周 18 lot，上周 12 lot，判断为有明显突增 [Done]\n- Move-Out Trend: 本周 18 lot，上周 12 lot，同步上升但需结合目标差额复核 [Done]\n- Root Cause Candidate: 主候选为 Move-In 突增造成短期流入压力，次候选为 dispatch / priority 保护挤占普通批次 [Done]\n\n### Agent 观察结果\n- 机台可用性和效率结果未支持设备宕机或 PM 是主要原因。\n- Hold WIP 不高，暂不支持 Hold 锁量是主要原因。\n- Move-In 出现明显上升，是当前证据中最强的原因线索。\n\n### Agent 分析判断\n主候选原因是流入压力增加导致当前 stage 的消化窗口被压缩；次候选原因是优先级批次保护和派工策略造成普通批次等待扩大。该判断仍需要工程师结合 dispatch log 和 product mix 二次确认。\n\n### Agent 阶段输出\n输出候选原因排序、证据链、排除项和待补证据，供下一流程生成工程问题包。\n\n### AI Agent\n建议保持 Flow 03 临时措施，并在进入 Flow 07 前补齐 dispatch log、hold reason 和 product mix 变化记录。\n\n## 当前阶段结果\n### 业务结果\n- Root Cause Analysis Status: 已完成候选原因排查\n- Primary Candidate: Move-In 突增造成短期流入压力\n- Secondary Candidate: Dispatch / priority 保护挤占普通批次\n- Confidence: Medium\n- Missing Evidence: dispatch log、hold reason、product mix 变化\n- Next Flow: 07 工程问题包与协同任务\n\n### 本阶段结论\n- 当前证据更支持流入节奏变化，而不是设备可用性或 Hold 锁量导致的产能损失。\n\n### Agent 判断逻辑\n- Tool active、OE / AE 和 Hold / Run WIP 未呈现明显异常，因此设备与 Hold 不是当前主候选。\n- Move-In 趋势出现明显变化，需要优先验证是否由上游 release、priority lot 或 dispatch policy 触发。\n\n### 状态与门禁\n- Next Flow: 07 工程问题包与协同任务\n- Gate: 工程师确认候选原因和补证项后进入工程问题包\n\n### 关键证据\n- Tool Status: 2 / 2 active，Hard Down = 0，PM = 0。\n- Tool Efficiency: AE / OE 均为 100%，Idle = 0h。\n- Move-In Trend: 本周 18 lot，上周 12 lot，存在明显突增信号。",
+  "next_flow_name": "<运行时事实>",
+  "root_cause_analysis_status": "<运行时事实>",
+  "text": "<运行时生成的完整 Markdown；仅使用 model_context.raw_inputs 事实。>",
   "content": {
     "title": "06 异常原因排查",
     "containers": [
@@ -18,14 +18,23 @@
           {
             "title": "Case Header",
             "items": [
-              {"label": "Case ID", "value": "demo-case-flow-06"},
-              {"label": "Stage", "value": "DNW-ANN"}
+              {
+                "label": "Case ID",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Stage",
+                "value": "<运行时事实>"
+              }
             ]
           },
           {
             "title": "Case Risk Snapshot｜异常发生时（风险快照）",
             "items": [
-              {"label": "Prior Flow", "value": "Flow 05 已完成 Case 分级与处置判定"}
+              {
+                "label": "Prior Flow",
+                "value": "<运行时事实>"
+              }
             ]
           }
         ]
@@ -33,25 +42,90 @@
       {
         "title": "当前阶段对话",
         "sections": [
-          {"title": "系统 / 用户触发", "items": ["Flow 05 已完成 Case 分级与处置判定，现在进入 Flow 06 异常原因排查。"]},
-          {"title": "Agent 接管", "items": ["结合前序 content 和 Flow 06 SQL 查询结果，输出候选原因排序与待补证据。"]},
-          {"title": "Agent 思考过程", "items": ["当前排查重点是解释 WIP Bubble 为什么扩大，而不是重新确认异常是否成立。"]},
-          {"title": "Agent 分析计划", "items": ["检查 WIP 状态、设备状态、设备效率、Move-In 与 Move-Out 趋势。"]},
+          {
+            "title": "系统 / 用户触发",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 接管",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 思考过程",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析计划",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
           {
             "title": "数据 / 工具调用",
             "items": [
-              {"label": "WIP State Check", "value": "Hold WIP = 25，Run WIP = 50，当前没有显示 Hold 大规模锁量", "status": "Done"},
-              {"label": "Tool Status Check", "value": "Active = 2 / 2，Hard Down = 0，PM = 0，Tool Uptime = 100%", "status": "Done"},
-              {"label": "Tool Efficiency Check", "value": "AE = 100%，OE = 100%，Idle = 0h", "status": "Done"},
-              {"label": "Move-In Trend", "value": "本周 18 lot，上周 12 lot，判断为有明显突增", "status": "Done"},
-              {"label": "Move-Out Trend", "value": "本周 18 lot，上周 12 lot，同步上升但需结合目标差额复核", "status": "Done"},
-              {"label": "Root Cause Candidate", "value": "主候选为 Move-In 突增造成短期流入压力，次候选为 dispatch / priority 保护挤占普通批次", "status": "Done"}
+              {
+                "label": "WIP State Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Tool Status Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Tool Efficiency Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Move-In Trend",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Move-Out Trend",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Root Cause Candidate",
+                "value": "<运行时事实>",
+                "status": "Done"
+              }
             ]
           },
-          {"title": "Agent 观察结果", "items": ["机台可用性和效率未支持设备宕机或 PM 是主要原因。", "Move-In 变化是当前最强线索。"]},
-          {"title": "Agent 分析判断", "items": ["主候选原因是流入压力增加；次候选原因是优先级批次保护和派工策略造成普通批次等待扩大。"]},
-          {"title": "Agent 阶段输出", "items": ["输出候选原因排序、证据链、排除项和待补证据。"]},
-          {"title": "AI Agent", "items": ["建议保持临时措施，并在进入 Flow 07 前补齐 dispatch log、hold reason 和 product mix 变化记录。"]}
+          {
+            "title": "Agent 观察结果",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析判断",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 阶段输出",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "AI Agent",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          }
         ]
       },
       {
@@ -60,19 +134,59 @@
           {
             "title": "业务结果",
             "items": [
-              {"label": "Root Cause Analysis Status", "value": "已完成候选原因排查"},
-              {"label": "Primary Candidate", "value": "Move-In 突增造成短期流入压力"},
-              {"label": "Secondary Candidate", "value": "Dispatch / priority 保护挤占普通批次"},
-              {"label": "Confidence", "value": "Medium"},
-              {"label": "Missing Evidence", "value": "dispatch log、hold reason、product mix 变化"}
+              {
+                "label": "Root Cause Analysis Status",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Primary Candidate",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Secondary Candidate",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Confidence",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Missing Evidence",
+                "value": "<运行时事实>"
+              }
             ]
           },
-          {"title": "本阶段结论", "items": ["当前证据更支持流入节奏变化，而不是设备可用性或 Hold 锁量导致的产能损失。"]},
-          {"title": "Agent 判断逻辑", "items": ["Tool active、OE / AE 和 Hold / Run WIP 未呈现明显异常。", "Move-In 趋势出现明显变化，需要优先验证上游 release 与 dispatch policy。"]},
-          {"title": "状态与门禁", "items": ["Next Flow: 07 工程问题包与协同任务", "Gate: 工程师确认候选原因和补证项后进入工程问题包"]},
-          {"title": "关键证据", "items": ["Tool Status: 2 / 2 active，Hard Down = 0，PM = 0。", "Tool Efficiency: AE / OE 均为 100%，Idle = 0h。", "Move-In Trend: 本周 18 lot，上周 12 lot，存在明显突增信号。"]}
+          {
+            "title": "本阶段结论",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 判断逻辑",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "状态与门禁",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "关键证据",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          }
         ]
       }
     ]
-  }
+  },
+  "_template_only": "仅示范结构；运行时只能使用 model_context.raw_inputs，禁止引用本文件业务内容。"
 }

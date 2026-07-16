@@ -1,4 +1,4 @@
-﻿---
+---
 name: wip-case-snapshot
 description: WIP Bubble 总控 Skill 的 Case 快照内部模块。用于 Flow 01 异常触发时准备原始 SQL 与 mock 数据包，供当前 Agent 自行生成并保存 WIP Case Snapshot。
 ---
@@ -41,7 +41,8 @@ internal/wip-case-snapshot/data/snapshot_mock.json
 - 如果 SQL 和 mock 都没有某字段，则当前 Agent 忽略该字段，不输出占位值。
 - 如果后续有依赖 SQL 结果的计算任务，当前 Agent 先拿到 SQL 原始结果，再把所需数据显式传给计算脚本；计算脚本不自行查询 SQL。
 
+## 无文件执行约束
 
-
-
-
+- 禁止创建或输出临时文件、请求 JSON、结果 JSON、压缩包、下载链接或文件日志。
+- 只读取已部署的配置、SQL、知识库和 mock 文件；唯一允许的持久化写入是 MySQL Case 记录。
+- 运行结果必须直接返回内联数据，不得以文件形式交付。

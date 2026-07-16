@@ -1,4 +1,4 @@
-﻿# Flow 02 Text Output Contract - 异常确认
+# Flow 02 Text Output Contract - 异常确认
 
 Flow 02 只完成“异常成立性确认”：确认 Flow 01 发现的 WIP Bubble 是否真实成立，排除数据延迟、指标口径错误、Target 无效、短时波动和重复 Case。
 

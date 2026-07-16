@@ -1,4 +1,4 @@
-﻿# Flow 02 JSON Output Contract - 异常确认
+# Flow 02 JSON Output Contract - 异常确认
 
 最终 JSON 必须是完整 Flow 输出，不是摘要 JSON。必须包含 `text` 和 `content.containers`。
 

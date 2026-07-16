@@ -3,8 +3,12 @@
 
 from __future__ import annotations
 
+import sys
+sys.dont_write_bytecode = True
+
 import argparse
 import json
+import re
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -18,22 +22,85 @@ SQL_DIR = Path(__file__).resolve().parents[1] / "sql"
 SQL_FILES = {
     "locate_high_wip_stage",
     "locate_downstream_starvation",
-    "locate_flow03_priority_lots",
-    "locate_flow04_impact_lot",
-    "locate_flow04_move_out_trend",
-    "locate_flow06_wip_hold_run",
-    "locate_flow06_tool_status",
-    "locate_flow06_tool_efficiency",
-    "locate_flow06_tool_efficiency_detail",
-    "locate_flow06_move_in_trend",
-    "locate_flow06_move_out_trend",
-    "get_latest_active_case",
+    "locate_priority_lots",
+    "locate_impact_lot",
+    "locate_move_out_trend",
+    "locate_wip_hold_run",
+    "locate_tool_status",
+    "locate_tool_dispatch",
+    "locate_tool_efficiency",
+    "locate_product_tool_profile",
+    "locate_tool_efficiency_detail",
+    "locate_move_in_trend",
+            "collect_case_data_snapshot",
+            "get_latest_active_case",
     "get_case_record",
     "get_case_flow_record",
     "update_case_flow_record",
     "insert_case_flow_record",
     "get_case_flow_record_by_save_marker",
 }
+
+CASE_DATA_SNAPSHOT_VERSION = "case-data-snapshot-v1"
+OFFLINE_SNAPSHOT_PATH = Path(__file__).resolve().parents[1] / "offline-data" / "production-high-wip-stage" / "case_data_snapshot.json"
+
+
+def load_offline_case_data_snapshot() -> Dict[str, Any]:
+    """Load the pre-exported production SQL snapshot without opening a database connection."""
+    if not OFFLINE_SNAPSHOT_PATH.exists():
+        raise FileNotFoundError(f"Offline case data snapshot not found: {OFFLINE_SNAPSHOT_PATH}")
+    raw = json.loads(OFFLINE_SNAPSHOT_PATH.read_text(encoding="utf-8-sig"))
+    if not isinstance(raw, dict):
+        raise ValueError("Offline case data snapshot must be a JSON object")
+    snapshot = canonicalize_case_data_snapshot(raw)
+    snapshot["data_mode"] = "offline"
+    return snapshot
+
+LEGACY_SQL_RESULT_KEYS = {
+    "locate_priority_lots": "locate_flow03_priority_lots",
+    "locate_impact_lot": "locate_flow04_impact_lot",
+    "locate_move_out_trend": "locate_flow04_move_out_trend",
+    "locate_wip_hold_run": "locate_flow06_wip_hold_run",
+    "locate_tool_status": "locate_flow06_tool_status",
+    "locate_tool_dispatch": "locate_flow06_tool_dispatch",
+    "locate_tool_efficiency": "locate_flow06_tool_efficiency",
+    "locate_product_tool_profile": "locate_flow06_product_tool_profile",
+    "locate_tool_efficiency_detail": "locate_flow06_tool_efficiency_detail",
+    "locate_move_in_trend": "locate_flow06_move_in_trend",
+}
+
+def canonicalize_case_data_snapshot(snapshot: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Read legacy Flow-grouped snapshots while persisting only the canonical sql_results shape."""
+    if not isinstance(snapshot, dict):
+        return {}
+    normalized = dict(snapshot)
+    sql_results = dict(snapshot.get("sql_results") or {})
+    for canonical_key, legacy_key in LEGACY_SQL_RESULT_KEYS.items():
+        if canonical_key not in sql_results and legacy_key in sql_results:
+            sql_results[canonical_key] = sql_results[legacy_key]
+    legacy_groups = {key: value for key, value in snapshot.items() if isinstance(value, dict)}
+    flow01 = legacy_groups.get("flow01", {})
+    flow03 = legacy_groups.get("flow03", {})
+    flow04 = legacy_groups.get("flow04", {})
+    flow06 = legacy_groups.get("flow06", {})
+    fallbacks = {
+        "locate_high_wip_stage": flow01.get("warehouse_high_wip"),
+        "locate_downstream_starvation": flow01.get("downstream_starvation") or flow03.get("downstream_starvation"),
+        "locate_priority_lots": flow03.get("priority_lots"),
+        "locate_impact_lot": flow04.get("impact_lot"),
+        "locate_move_out_trend": flow04.get("move_out_trend") or flow06.get("move_out_trend"),
+        "locate_wip_hold_run": flow06.get("wip_hold_run"),
+        "locate_tool_status": flow06.get("tool_status"),
+        "locate_tool_efficiency": flow06.get("tool_efficiency"),
+        "locate_tool_dispatch": flow06.get("tool_dispatch"),
+        "locate_product_tool_profile": flow06.get("product_tool_profile"),
+        "locate_move_in_trend": flow06.get("move_in_trend"),
+    }
+    for key, value in fallbacks.items():
+        if key not in sql_results and value not in (None, "", [], {}):
+            sql_results[key] = value
+    normalized["sql_results"] = sql_results
+    return normalized
 
 
 def _load_pymysql():
@@ -66,9 +133,17 @@ def _load_file_config() -> Dict[str, Any]:
     return data.get("mysql", data)
 
 
+def sql_dialect() -> str:
+    return str(_load_file_config().get("sql_dialect", "production")).strip().lower()
+
+
+def is_local_mysql_dialect() -> bool:
+    return sql_dialect() == "mysql_local"
+
+
 def db_config() -> Dict[str, Any]:
     file_config = _load_file_config()
-    return {
+    config = {
         "host": str(file_config.get("host", "127.0.0.1")),
         "port": int(file_config.get("port", 3306)),
         "user": str(file_config.get("user", "root")),
@@ -76,6 +151,80 @@ def db_config() -> Dict[str, Any]:
         "charset": str(file_config.get("charset", "utf8mb4")),
         "autocommit": True,
     }
+    database = str(file_config.get("database") or "").strip()
+    if database:
+        config["database"] = database
+    return config
+
+
+def _adapt_production_sql_for_local_mysql(name: str, sql: str) -> str:
+    """Translate only production-engine functions unsupported by local MySQL."""
+    if not is_local_mysql_dialect():
+        return sql
+
+    if name == "locate_impact_lot":
+        sql = sql.replace(
+            "count_if(s.lot_state IN ('wait', 'reserved', 'finished'))",
+            "SUM(IF(s.lot_state IN ('wait', 'reserved', 'finished'), 1, 0))",
+        )
+    if name == "locate_tool_dispatch":
+        replacements = {
+            "count_if(lot_state IN ('running'))": "SUM(IF(lot_state IN ('running'), 1, 0))",
+            "count_if(lot_state IN ('wait', 'reserved', 'finished'))": "SUM(IF(lot_state IN ('wait', 'reserved', 'finished'), 1, 0))",
+            "count_if(lot_state IN ('hold', 'running hold', 'inventory hold'))": "SUM(IF(lot_state IN ('hold', 'running hold', 'inventory hold'), 1, 0))",
+            "trim(json_query(lot_list, '$[0].dueTime'), '\"')": "JSON_UNQUOTE(JSON_EXTRACT(lot_list, '$[0].dueTime'))",
+            "trim(json_query(lot_list, '$[0].eqpId'), '\"')": "JSON_UNQUOTE(JSON_EXTRACT(lot_list, '$[0].eqpId'))",
+            "date_trunc('hour', current_timestamp - interval 30 minute)": "TIMESTAMP(DATE_FORMAT(CURRENT_TIMESTAMP - INTERVAL 30 MINUTE, '%Y-%m-%d %H:00:00'))",
+            "date_trunc('day', current_timestamp - interval 7 hour - interval 30 minute)": "TIMESTAMP(DATE(CURRENT_TIMESTAMP - INTERVAL 7 HOUR - INTERVAL 30 MINUTE))",
+        }
+        for source, target in replacements.items():
+            sql = sql.replace(source, target)
+    if name == "locate_tool_efficiency":
+        # The production aggregate references aliases and date_trunc semantics that MySQL does not support.
+        # This local-only equivalent preserves the same six output fields for the demo database.
+        return """
+SELECT
+  CONCAT(ROUND((SUM(COALESCE(r.run_dur_h, 0)) + SUM(COALESCE(r.idle_dur_h, 0))) /
+    GREATEST(COUNT(DISTINCT e.eqp_name) * (TIMESTAMPDIFF(SECOND,
+      TIMESTAMP(DATE(CURRENT_TIMESTAMP - INTERVAL 7 HOUR - INTERVAL 30 MINUTE)) + INTERVAL 7 HOUR + INTERVAL 30 MINUTE,
+      CURRENT_TIMESTAMP) / 3600), 1) * 100, 2), '%') AS ae_ratio,
+  CONCAT(ROUND(SUM(COALESCE(r.run_dur_h, 0)) /
+    GREATEST(COUNT(DISTINCT e.eqp_name) * (TIMESTAMPDIFF(SECOND,
+      TIMESTAMP(DATE(CURRENT_TIMESTAMP - INTERVAL 7 HOUR - INTERVAL 30 MINUTE)) + INTERVAL 7 HOUR + INTERVAL 30 MINUTE,
+      CURRENT_TIMESTAMP) / 3600), 1) * 100, 2), '%') AS oe_ratio,
+  ROUND(SUM(COALESCE(r.run_dur_h, 0))) AS current_run_dur_h,
+  ROUND(SUM(COALESCE(r.idle_dur_h, 0))) AS current_idle_dur_h,
+  COUNT(DISTINCT e.eqp_name) AS eqp_count,
+  COUNT(DISTINCT e.eqp_name) * ROUND(TIMESTAMPDIFF(SECOND,
+    TIMESTAMP(DATE(CURRENT_TIMESTAMP - INTERVAL 7 HOUR - INTERVAL 30 MINUTE)) + INTERVAL 7 HOUR + INTERVAL 30 MINUTE,
+    CURRENT_TIMESTAMP) / 3600) AS current_total_dur_h
+FROM aifab.dim_eqp_all_rt e
+LEFT JOIN (
+  SELECT `unique_eqp_code#v1` AS eqp_name, `run_dur_h#v1` AS run_dur_h, `idle_dur_h#v1` AS idle_dur_h
+  FROM (
+    SELECT `unique_eqp_code#v1`, `run_dur_h#v1`, `idle_dur_h#v1`,
+           ROW_NUMBER() OVER (PARTITION BY `unique_eqp_code#v1` ORDER BY `_biz_ts_#v1` DESC) AS rn
+    FROM ffs_vfab_1.ads_ffs_feature_fact_eqp_rti
+    WHERE `_biz_ts_#v1` >= UNIX_TIMESTAMP(TIMESTAMP(DATE(CURRENT_TIMESTAMP - INTERVAL 1 DAY))) * 1000
+  ) latest
+  WHERE rn = 1
+) r ON r.eqp_name = e.eqp_name
+WHERE e.construct_type = 'Normal'
+  AND e.name <> 'DUMMY'
+  AND e.capability IN (SELECT capability FROM aifab.dim_conf_flow_manu WHERE stage_name = %s)
+""".strip()
+    if name in {"locate_tool_efficiency", "locate_tool_efficiency_detail"}:
+        replacements = {
+            "date_trunc('DAY', current_timestamp - interval 7 hour - interval 30 minute)": "TIMESTAMP(DATE(CURRENT_TIMESTAMP - INTERVAL 7 HOUR - INTERVAL 30 MINUTE))",
+            "date_trunc('DAY', current_timestamp - interval 1 day)": "TIMESTAMP(DATE(CURRENT_TIMESTAMP - INTERVAL 1 DAY))",
+        }
+        for source, target in replacements.items():
+            sql = sql.replace(source, target)
+    return sql
+
+
+def _escape_literal_percent_for_pymysql(sql: str) -> str:
+    return re.sub(r"%(?![%s])", "%%", sql)
 
 
 def load_sql(name: str) -> str:
@@ -84,7 +233,8 @@ def load_sql(name: str) -> str:
     path = SQL_DIR / f"{name}.sql"
     if not path.exists():
         raise FileNotFoundError(f"SQL file not found: {path}")
-    return path.read_text(encoding="utf-8-sig").strip()
+    production_sql = path.read_text(encoding="utf-8-sig").strip()
+    return _escape_literal_percent_for_pymysql(_adapt_production_sql_for_local_mysql(name, production_sql))
 
 
 @contextmanager
@@ -317,20 +467,20 @@ def ensure_flow03_demo_data(stage_name: str, downstream_stage_name: str = "PW-PH
     return {"stage_name": current_stage, "downstream_stage_name": downstream_stage, "seeded": seeded}
 
 
-def locate_flow03_priority_lots(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
+def locate_priority_lots(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
     """Return Flow 03 Hot Lot / Super Hot Run rows, seeding local demo data if absent."""
     try:
-        rows = fetch_all(load_sql("locate_flow03_priority_lots"), (stage_name,))
+        rows = fetch_all(load_sql("locate_priority_lots"), (stage_name,))
     except Exception:
         if not ensure_demo_data:
             raise
         ensure_flow03_demo_data(stage_name)
-        rows = fetch_all(load_sql("locate_flow03_priority_lots"), (stage_name,))
+        rows = fetch_all(load_sql("locate_priority_lots"), (stage_name,))
     priorities = {str(row.get("priority") or "").strip().lower() for row in rows}
     missing_required_type = "hot lot" not in priorities or "super hot lot" not in priorities
     if ensure_demo_data and (not rows or missing_required_type):
         ensure_flow03_demo_data(stage_name)
-        rows = fetch_all(load_sql("locate_flow03_priority_lots"), (stage_name,))
+        rows = fetch_all(load_sql("locate_priority_lots"), (stage_name,))
     return rows
 
 
@@ -440,53 +590,70 @@ def ensure_flow04_demo_data(stage_name: str) -> Dict[str, Any]:
                 )
                 seeded.append("dim_wip_target.flow04_stage_target")
 
-            move_out_count = _count_with_cursor(
+            this_week_count = _count_with_cursor(
                 cursor,
                 """
-                SELECT COUNT(1) AS cnt
+                SELECT COUNT(DISTINCT lot_name) AS cnt
+                FROM aifab.dwd_wip_lot_step_his_rt
+                WHERE stage_name = %s
+                  AND step_out_time IS NOT NULL
+                  AND last_updated_time >= CURRENT_TIMESTAMP - INTERVAL 1 WEEK
+                """,
+                (current_stage,),
+            )
+            last_week_count = _count_with_cursor(
+                cursor,
+                """
+                SELECT COUNT(DISTINCT lot_name) AS cnt
                 FROM aifab.dwd_wip_lot_step_his_rt
                 WHERE stage_name = %s
                   AND step_out_time IS NOT NULL
                   AND last_updated_time >= CURRENT_TIMESTAMP - INTERVAL 2 WEEK
+                  AND last_updated_time < CURRENT_TIMESTAMP - INTERVAL 1 WEEK
                 """,
                 (current_stage,),
             )
-            if move_out_count == 0:
-                _insert_move_out_history_rows(cursor, current_stage)
-                seeded.append("dwd_wip_lot_step_his_rt.move_out_history")
+            if this_week_count == 0 or last_week_count == 0:
+                _insert_move_out_history_rows(
+                    cursor,
+                    current_stage,
+                    this_week_count=12 if this_week_count == 0 else 0,
+                    last_week_count=10 if last_week_count == 0 else 0,
+                )
+                seeded.append("dwd_wip_lot_step_his_rt.weekly_history")
     return {"stage_name": current_stage, "seeded": seeded}
 
 
-def locate_flow04_impact_lot(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+def locate_impact_lot(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
     """Return Flow 04 impact lot count, seeding local demo data if absent."""
     try:
-        row = fetch_one(load_sql("locate_flow04_impact_lot"), (stage_name,))
+        row = fetch_one(load_sql("locate_impact_lot"), (stage_name,))
     except Exception:
         if not ensure_demo_data:
             raise
         ensure_flow04_demo_data(stage_name)
-        row = fetch_one(load_sql("locate_flow04_impact_lot"), (stage_name,))
+        row = fetch_one(load_sql("locate_impact_lot"), (stage_name,))
     if ensure_demo_data and (not row or row.get("impact_lot_count") is None):
         ensure_flow04_demo_data(stage_name)
-        row = fetch_one(load_sql("locate_flow04_impact_lot"), (stage_name,))
+        row = fetch_one(load_sql("locate_impact_lot"), (stage_name,))
     return row
 
 
-def locate_flow04_move_out_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+def locate_move_out_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
     """Return Flow 04 week-over-week move-out trend, seeding local demo data if absent."""
     try:
-        row = fetch_one(load_sql("locate_flow04_move_out_trend"), (stage_name, stage_name))
+        row = fetch_one(load_sql("locate_move_out_trend"), (stage_name, stage_name))
     except Exception:
         if not ensure_demo_data:
             raise
         ensure_flow04_demo_data(stage_name)
-        row = fetch_one(load_sql("locate_flow04_move_out_trend"), (stage_name, stage_name))
+        row = fetch_one(load_sql("locate_move_out_trend"), (stage_name, stage_name))
     if ensure_demo_data and (not row or row.get("lot_count_this_week") is None or row.get("lot_count_last_week") in (None, 0)):
         ensure_flow04_demo_data(stage_name)
-        row = fetch_one(load_sql("locate_flow04_move_out_trend"), (stage_name, stage_name))
+        row = fetch_one(load_sql("locate_move_out_trend"), (stage_name, stage_name))
     return row
 
-def locate_flow03_downstream_starvation(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+def locate_downstream_starvation_with_demo(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
     """Return Flow 03 downstream starvation row, seeding local demo data if absent."""
     try:
         row = locate_downstream_starvation(stage_name)
@@ -635,6 +802,60 @@ def ensure_flow06_demo_data(stage_name: str) -> Dict[str, Any]:
     return {"stage_name": current_stage, "capability": capability, "seeded": seeded}
 
 
+def ensure_flow06_production_dependencies(stage_name: str) -> Dict[str, Any]:
+    """Create only the local MySQL fields and rows required by production SQL 6 and 10."""
+    if not is_local_mysql_dialect():
+        return {"stage_name": stage_name, "seeded": []}
+
+    current_stage = (stage_name or "DNW-ANN").strip() or "DNW-ANN"
+    capability = _stage_capability(current_stage)
+    flow_id = f"FLOW_{current_stage.replace('-', '_')}"
+    seeded: list[str] = []
+    ensure_flow06_demo_data(current_stage)
+    with connection() as conn:
+        with conn.cursor() as cursor:
+            _ensure_column(cursor, "aifab.dim_conf_flow_manu", "flow_id", "flow_id VARCHAR(128) NULL")
+            cursor.execute("UPDATE aifab.dim_conf_flow_manu SET flow_id = COALESCE(flow_id, %s), capability = COALESCE(capability, %s) WHERE stage_name = %s", (flow_id, capability, current_stage))
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS aifab.dim_conf_product (
+                  product_id VARCHAR(128) NOT NULL,
+                  flow_id VARCHAR(128) NOT NULL,
+                  PRIMARY KEY (product_id),
+                  KEY idx_dim_conf_product_flow (flow_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+            cursor.execute("SELECT DISTINCT product_name FROM aifab.dim_wip_lot_rt WHERE stage_name = %s AND product_name IS NOT NULL", (current_stage,))
+            products = [str(row.get("product_name")) for row in cursor.fetchall() if row.get("product_name")]
+            if not products:
+                products = ["DEMO_PRODUCT"]
+            cursor.executemany("INSERT IGNORE INTO aifab.dim_conf_product (product_id, flow_id) VALUES (%s, %s)", [(product, flow_id) for product in products])
+            seeded.append("dim_conf_product")
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS aifab.dwd_wip_lot_dispatch_rt (
+                  fab_id VARCHAR(64) NOT NULL,
+                  send_time DATETIME NOT NULL,
+                  lot_names VARCHAR(128) NOT NULL,
+                  lot_list JSON NOT NULL,
+                  priority INT NULL,
+                  KEY idx_dispatch_lot (lot_names),
+                  KEY idx_dispatch_send_time (send_time)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+            cursor.execute("SELECT lot_name FROM aifab.dim_wip_lot_rt WHERE stage_name = %s ORDER BY lot_name LIMIT 64", (current_stage,))
+            lot_names = [str(row.get("lot_name")) for row in cursor.fetchall() if row.get("lot_name")]
+            now = datetime.now().replace(microsecond=0)
+            rows = []
+            for index, lot_name in enumerate(lot_names):
+                if _count_with_cursor(cursor, "SELECT COUNT(1) AS cnt FROM aifab.dwd_wip_lot_dispatch_rt WHERE lot_names = %s", (lot_name,)):
+                    continue
+                eqp_name = "PRTAA01" if index % 2 == 0 else "PRTAA02"
+                lot_list = json.dumps([{"dueTime": now.strftime("%Y-%m-%d %H:%M:%S"), "eqpId": eqp_name}])
+                rows.append(("FAB1", now, lot_name, lot_list, 4))
+            if rows:
+                cursor.executemany("INSERT INTO aifab.dwd_wip_lot_dispatch_rt (fab_id, send_time, lot_names, lot_list, priority) VALUES (%s, %s, %s, %s, %s)", rows)
+                seeded.append("dwd_wip_lot_dispatch_rt")
+    return {"stage_name": current_stage, "seeded": seeded}
+
 def _fetch_flow06_one(sql_name: str, stage_name: str, params: Iterable[Any], ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
     try:
         row = fetch_one(load_sql(sql_name), params)
@@ -646,7 +867,7 @@ def _fetch_flow06_one(sql_name: str, stage_name: str, params: Iterable[Any], ens
     if ensure_demo_data and not row:
         ensure_flow06_demo_data(stage_name)
         row = fetch_one(load_sql(sql_name), params)
-    if ensure_demo_data and sql_name == "locate_flow06_tool_efficiency" and row and int(row.get("eqp_count") or 0) == 0:
+    if ensure_demo_data and sql_name == "locate_tool_efficiency" and row and int(row.get("eqp_count") or 0) == 0:
         ensure_flow06_demo_data(stage_name)
         row = fetch_one(load_sql(sql_name), params)
     return row
@@ -666,28 +887,128 @@ def _fetch_flow06_all(sql_name: str, stage_name: str, params: Iterable[Any], ens
     return rows
 
 
-def locate_flow06_wip_hold_run(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_flow06_wip_hold_run", stage_name, (stage_name,), ensure_demo_data)
+def locate_wip_hold_run(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_wip_hold_run", stage_name, (stage_name,), ensure_demo_data)
 
 
-def locate_flow06_tool_status(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_flow06_tool_status", stage_name, (stage_name,), ensure_demo_data)
+def locate_tool_status(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_tool_status", stage_name, (stage_name,), ensure_demo_data)
 
 
-def locate_flow06_tool_efficiency(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_flow06_tool_efficiency", stage_name, (stage_name,), ensure_demo_data)
+def locate_tool_dispatch(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
+    local_demo = ensure_demo_data and is_local_mysql_dialect()
+    if local_demo:
+        ensure_flow06_production_dependencies(stage_name)
+    return _fetch_flow06_all("locate_tool_dispatch", stage_name, (stage_name,), local_demo)
 
 
-def locate_flow06_tool_efficiency_detail(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
-    return _fetch_flow06_all("locate_flow06_tool_efficiency_detail", stage_name, (stage_name,), ensure_demo_data)
+def locate_product_tool_profile(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
+    local_demo = ensure_demo_data and is_local_mysql_dialect()
+    if local_demo:
+        ensure_flow06_production_dependencies(stage_name)
+    return _fetch_flow06_all("locate_product_tool_profile", stage_name, (stage_name, stage_name), local_demo)
 
 
-def locate_flow06_move_in_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_flow06_move_in_trend", stage_name, (stage_name, stage_name), ensure_demo_data)
+def locate_tool_efficiency(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_tool_efficiency", stage_name, (stage_name,), ensure_demo_data)
 
 
-def locate_flow06_move_out_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_flow06_move_out_trend", stage_name, (stage_name, stage_name), ensure_demo_data)
+def locate_tool_efficiency_detail(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
+    return _fetch_flow06_all("locate_tool_efficiency_detail", stage_name, (stage_name,), ensure_demo_data)
+
+
+def locate_move_in_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_move_in_trend", stage_name, (stage_name, stage_name), ensure_demo_data)
+
+
+def collect_case_data_snapshot(
+    stage_name: Optional[str] = None,
+    high_wip: Optional[Dict[str, Any]] = None,
+    ensure_demo_data: bool = True,
+) -> Dict[str, Any]:
+    """Collect all whitelisted SQL facts once for a case and reuse them in later flows."""
+    captured_at = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    query_errors: list[Dict[str, str]] = []
+
+    warehouse_high_wip = high_wip
+    if warehouse_high_wip is None:
+        try:
+            warehouse_high_wip = locate_high_wip_stage()
+        except Exception as exc:  # pragma: no cover - depends on local MySQL availability
+            query_errors.append({"query": "locate_high_wip_stage", "error": str(exc)})
+            warehouse_high_wip = None
+
+    resolved_stage = stage_name or (warehouse_high_wip or {}).get("stage_name") or "DNW-ANN"
+    resolved_stage = str(resolved_stage).strip() or "DNW-ANN"
+
+    def capture(query_name: str, fn: Any) -> Any:
+        try:
+            return fn()
+        except Exception as exc:  # pragma: no cover - depends on local MySQL availability
+            query_errors.append({"query": query_name, "error": str(exc)})
+            return None
+
+    downstream_starvation = capture(
+        "locate_downstream_starvation",
+        lambda: locate_downstream_starvation_with_demo(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    priority_lots = capture(
+        "locate_priority_lots",
+        lambda: locate_priority_lots(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    impact_lot = capture(
+        "locate_impact_lot",
+        lambda: locate_impact_lot(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    move_out_trend = capture(
+        "locate_move_out_trend",
+        lambda: locate_move_out_trend(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    flow06_wip_hold_run = capture(
+        "locate_wip_hold_run",
+        lambda: locate_wip_hold_run(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    flow06_tool_status = capture(
+        "locate_tool_status",
+        lambda: locate_tool_status(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    flow06_tool_efficiency = capture(
+        "locate_tool_efficiency",
+        lambda: locate_tool_efficiency(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    flow06_tool_dispatch = capture(
+        "locate_tool_dispatch",
+        lambda: locate_tool_dispatch(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    flow06_product_tool_profile = capture(
+        "locate_product_tool_profile",
+        lambda: locate_product_tool_profile(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    flow06_move_in_trend = capture(
+        "locate_move_in_trend",
+        lambda: locate_move_in_trend(resolved_stage, ensure_demo_data=ensure_demo_data),
+    )
+    sql_results = {
+        "locate_high_wip_stage": warehouse_high_wip,
+        "locate_downstream_starvation": downstream_starvation,
+        "locate_priority_lots": priority_lots,
+        "locate_impact_lot": impact_lot,
+        "locate_move_out_trend": move_out_trend,
+        "locate_wip_hold_run": flow06_wip_hold_run,
+        "locate_tool_status": flow06_tool_status,
+        "locate_tool_efficiency": flow06_tool_efficiency,
+        "locate_tool_dispatch": flow06_tool_dispatch,
+        "locate_product_tool_profile": flow06_product_tool_profile,
+        "locate_move_in_trend": flow06_move_in_trend,
+    }
+    return {
+        "schema_version": CASE_DATA_SNAPSHOT_VERSION,
+        "captured_at": captured_at,
+        "stage_name": resolved_stage,
+        "sql_results": sql_results,
+        "query_errors": query_errors,
+        "usage_rule": "SQL facts are collected once when the case starts; later flows must read this saved snapshot instead of querying SQL again.",
+    }
 def get_latest_active_case(
     case_id: Optional[str] = None,
     next_flow_no: Optional[str] = None,
@@ -793,15 +1114,17 @@ def main() -> None:
         choices=[
             "locate_high_wip_stage",
             "locate_downstream_starvation",
-            "locate_flow03_priority_lots",
-            "locate_flow04_impact_lot",
-            "locate_flow04_move_out_trend",
-    "locate_flow06_wip_hold_run",
-    "locate_flow06_tool_status",
-    "locate_flow06_tool_efficiency",
-    "locate_flow06_tool_efficiency_detail",
-    "locate_flow06_move_in_trend",
-    "locate_flow06_move_out_trend",
+            "locate_priority_lots",
+            "locate_impact_lot",
+            "locate_move_out_trend",
+    "locate_wip_hold_run",
+    "locate_tool_status",
+    "locate_tool_dispatch",
+    "locate_tool_efficiency",
+    "locate_product_tool_profile",
+    "locate_tool_efficiency_detail",
+    "locate_move_in_trend",
+            "collect_case_data_snapshot",
             "get_latest_active_case",
             "get_case_record",
         ],
@@ -818,42 +1141,48 @@ def main() -> None:
         if not args.stage_name:
             raise SystemExit("--stage-name is required for locate_downstream_starvation")
         result = locate_downstream_starvation(args.stage_name)
-    elif args.action == "locate_flow03_priority_lots":
+    elif args.action == "locate_priority_lots":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow03_priority_lots")
-        result = locate_flow03_priority_lots(args.stage_name)
-    elif args.action == "locate_flow04_impact_lot":
+            raise SystemExit("--stage-name is required for locate_priority_lots")
+        result = locate_priority_lots(args.stage_name)
+    elif args.action == "locate_impact_lot":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow04_impact_lot")
-        result = locate_flow04_impact_lot(args.stage_name)
-    elif args.action == "locate_flow04_move_out_trend":
+            raise SystemExit("--stage-name is required for locate_impact_lot")
+        result = locate_impact_lot(args.stage_name)
+    elif args.action == "locate_wip_hold_run":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow04_move_out_trend")
-        result = locate_flow04_move_out_trend(args.stage_name)
-    elif args.action == "locate_flow06_wip_hold_run":
+            raise SystemExit("--stage-name is required for locate_wip_hold_run")
+        result = locate_wip_hold_run(args.stage_name)
+    elif args.action == "locate_tool_status":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow06_wip_hold_run")
-        result = locate_flow06_wip_hold_run(args.stage_name)
-    elif args.action == "locate_flow06_tool_status":
+            raise SystemExit("--stage-name is required for locate_tool_status")
+        result = locate_tool_status(args.stage_name)
+    elif args.action == "locate_tool_dispatch":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow06_tool_status")
-        result = locate_flow06_tool_status(args.stage_name)
-    elif args.action == "locate_flow06_tool_efficiency":
+            raise SystemExit("--stage-name is required for locate_tool_dispatch")
+        result = locate_tool_dispatch(args.stage_name)
+    elif args.action == "locate_product_tool_profile":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow06_tool_efficiency")
-        result = locate_flow06_tool_efficiency(args.stage_name)
-    elif args.action == "locate_flow06_tool_efficiency_detail":
+            raise SystemExit("--stage-name is required for locate_product_tool_profile")
+        result = locate_product_tool_profile(args.stage_name)
+    elif args.action == "locate_tool_efficiency":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow06_tool_efficiency_detail")
-        result = locate_flow06_tool_efficiency_detail(args.stage_name)
-    elif args.action == "locate_flow06_move_in_trend":
+            raise SystemExit("--stage-name is required for locate_tool_efficiency")
+        result = locate_tool_efficiency(args.stage_name)
+    elif args.action == "locate_tool_efficiency_detail":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow06_move_in_trend")
-        result = locate_flow06_move_in_trend(args.stage_name)
-    elif args.action == "locate_flow06_move_out_trend":
+            raise SystemExit("--stage-name is required for locate_tool_efficiency_detail")
+        result = locate_tool_efficiency_detail(args.stage_name)
+    elif args.action == "locate_move_in_trend":
         if not args.stage_name:
-            raise SystemExit("--stage-name is required for locate_flow06_move_out_trend")
-        result = locate_flow06_move_out_trend(args.stage_name)
+            raise SystemExit("--stage-name is required for locate_move_in_trend")
+        result = locate_move_in_trend(args.stage_name)
+    elif args.action == "locate_move_out_trend":
+        if not args.stage_name:
+            raise SystemExit("--stage-name is required for locate_move_out_trend")
+        result = locate_move_out_trend(args.stage_name)
+    elif args.action == "collect_case_data_snapshot":
+        result = collect_case_data_snapshot(stage_name=args.stage_name)
     elif args.action == "get_latest_active_case":
         result = get_latest_active_case(
             case_id=args.case_id,
@@ -871,6 +1200,18 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

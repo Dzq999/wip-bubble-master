@@ -7,6 +7,8 @@ import argparse
 import json
 import re
 import sys
+
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -23,7 +25,7 @@ FLOW_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 FLOW_MOCK_PATH = Path(__file__).resolve().parents[1] / "data" / "flow04_mock.json"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 
-from query_data import dumps, locate_flow04_impact_lot, locate_flow04_move_out_trend, save_case_flow_record  # noqa: E402
+from query_data import canonicalize_case_data_snapshot, dumps, save_case_flow_record  # noqa: E402
 
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
@@ -111,7 +113,7 @@ def load_json_arg(value: Optional[str]) -> Optional[Any]:
     if value == "-":
         raw = sys.stdin.read()
     elif value.startswith("@"):
-        raw = Path(value[1:]).read_text(encoding="utf-8-sig")
+        raise ValueError("File-based JSON inputs are disabled; pass inline JSON or stdin.")
     else:
         raw = value
     return _extract_json_value(raw.lstrip("\ufeff"))
@@ -159,6 +161,22 @@ def previous_content_summary(record: Dict[str, Any]) -> Dict[str, Any]:
             "content": flow_data.get("content", {}),
         }
     )
+
+
+
+def extract_case_data_snapshot(records: list[Dict[str, Any]]) -> Dict[str, Any]:
+    for record in records:
+        flow_data = parse_flow_data(record)
+        snapshot = flow_data.get("case_data_snapshot")
+        if isinstance(snapshot, dict) and snapshot:
+            return snapshot
+    return {}
+def extract_case_data_snapshot(records: list[Dict[str, Any]]) -> Dict[str, Any]:
+    for record in records:
+        snapshot = parse_flow_data(record).get("case_data_snapshot")
+        if isinstance(snapshot, dict) and snapshot:
+            return snapshot
+    return {}
 
 
 def iter_content_items(value: Any) -> list[Dict[str, Any]]:
@@ -248,40 +266,34 @@ def derive_current_stage_context(previous_flow_contents: list[Dict[str, Any]]) -
     return {"stage_name": "DNW-ANN", "source": "default_demo_stage"}
 
 
-def build_flow04_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+def build_flow04_inputs(previous_flow_contents: list[Dict[str, Any]], case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     flow04_inputs = load_flow_mock()
     current_stage_context = derive_current_stage_context(previous_flow_contents)
-    current_stage = current_stage_context.get("stage_name") or "DNW-ANN"
+    snapshot = case_data_snapshot if isinstance(case_data_snapshot, dict) else {}
+    sql_snapshot = snapshot.get("sql_results", {}) if isinstance(snapshot.get("sql_results"), dict) else {}
+    current_stage = snapshot.get("stage_name") or current_stage_context.get("stage_name") or "DNW-ANN"
     downstream_context = derive_downstream_context(previous_flow_contents)
+    impact_lot_row = sql_snapshot.get("locate_impact_lot")
+    move_out_row = sql_snapshot.get("locate_move_out_trend")
     sql_results: Dict[str, Any] = {
         "stage_name": current_stage,
-        "impact_lot": None,
-        "move_out_trend": None,
-        "query_errors": [],
+        "impact_lot": impact_lot_row,
+        "move_out_trend": move_out_row,
+        "source": "case_data_snapshot.sql_results",
     }
 
-    try:
-        impact_lot_row = locate_flow04_impact_lot(current_stage)
-        sql_results["impact_lot"] = impact_lot_row
-        if impact_lot_row and impact_lot_row.get("impact_lot_count") is not None:
-            impact_scope = flow04_inputs.setdefault("impact_scope", {})
-            impact_scope["impact_lot"] = str(int(float(impact_lot_row["impact_lot_count"])))
-            impact_scope["impact_lot_source"] = "sql.locate_flow04_impact_lot"
-    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
-        sql_results["query_errors"].append({"query": "locate_flow04_impact_lot", "error": str(exc)})
+    if isinstance(impact_lot_row, dict) and impact_lot_row.get("impact_lot_count") is not None:
+        impact_scope = flow04_inputs.setdefault("impact_scope", {})
+        impact_scope["impact_lot"] = str(int(float(impact_lot_row["impact_lot_count"])))
+        impact_scope["impact_lot_source"] = "case_data_snapshot.sql_results.locate_impact_lot"
 
-    try:
-        move_out_row = locate_flow04_move_out_trend(current_stage)
-        sql_results["move_out_trend"] = move_out_row
-        if move_out_row:
-            move_out_impact = flow04_inputs.setdefault("move_out_impact", {})
-            move_out_impact["lot_count_this_week"] = move_out_row.get("lot_count_this_week")
-            move_out_impact["lot_count_last_week"] = move_out_row.get("lot_count_last_week")
-            move_out_impact["move_out_ratio_pct"] = move_out_row.get("move_out_ratio_pct")
-            move_out_impact["move_out_comment"] = move_out_row.get("move_out_comment")
-            move_out_impact["source"] = "sql.locate_flow04_move_out_trend"
-    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
-        sql_results["query_errors"].append({"query": "locate_flow04_move_out_trend", "error": str(exc)})
+    if isinstance(move_out_row, dict) and move_out_row:
+        move_out_impact = flow04_inputs.setdefault("move_out_impact", {})
+        move_out_impact["lot_count_this_week"] = move_out_row.get("lot_count_this_week")
+        move_out_impact["lot_count_last_week"] = move_out_row.get("lot_count_last_week")
+        move_out_impact["move_out_ratio_pct"] = move_out_row.get("move_out_ratio_pct")
+        move_out_impact["move_out_comment"] = move_out_row.get("move_out_comment")
+        move_out_impact["source"] = "case_data_snapshot.sql_results.locate_move_out_trend"
 
     downstream_supply = flow04_inputs.get("downstream_supply")
     if isinstance(downstream_supply, dict):
@@ -292,13 +304,14 @@ def build_flow04_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[st
     return {
         "flow04_inputs": flow04_inputs,
         "derived_context": {"current_stage": current_stage_context, "downstream": downstream_context},
+        "case_data_snapshot": snapshot,
         "sql_results": _drop_empty(sql_results),
     }
-
 def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> Dict[str, Any]:
     previous_records = normalize_previous_records(previous_record)
     previous_flow_contents = [previous_content_summary(record) for record in previous_records]
-    flow04_context = build_flow04_inputs(previous_flow_contents)
+    case_data_snapshot = extract_case_data_snapshot(previous_records)
+    flow04_context = build_flow04_inputs(previous_flow_contents, case_data_snapshot=case_data_snapshot)
     return {
         "case_id": case_id,
         "flow": {"flow_no": FLOW_NO, "flow_name": FLOW_NAME, "purpose": "影响范围评估"},
@@ -310,14 +323,16 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "knowledge_pack": load_knowledge_pack(),
         "output_contracts": load_output_contracts(),
         "generation_rules": [
+            "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
+            "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
             "优先从 previous_flows[].content 获取 Case Header、风险快照、异常确认结论、临时措施和门禁状态；不要读取或依赖前序全文 text。",
             "如果多个前序流程都提供 content，按 Flow 顺序综合使用；距离当前流程最近的内容优先。",
-            "Impact Lot 必须优先使用 raw_inputs.sql_results.impact_lot.impact_lot_count；SQL 无结果时才使用 flow04_inputs。",
-            "Move-Out Impact 必须优先使用 raw_inputs.sql_results.move_out_trend 的本周/上周 lot_count、move_out_ratio_pct 和 move_out_comment；不要编造 Shift Risk、ETA Risk 或交付承诺字段。",
+            "Impact Lot 必须使用 Flow 01 保存的 case_data_snapshot.sql_results.locate_impact_lot.impact_lot_count；快照没有该字段时才使用 flow04_inputs。",
+            "Move-Out Impact 必须使用 Flow 01 保存的 case_data_snapshot.sql_results.locate_move_out_trend 的本周/上周 lot_count、move_out_ratio_pct 和 move_out_comment；不要编造 Shift Risk、ETA Risk 或交付承诺字段。",
             "下游对象必须优先使用 derived_context.downstream.stage_name；例如前序风险快照为 Next Stage = PW-PH 时，下游对象就是 PW-PH。",
             "Flow 04 只做影响范围评估：Impact Lot / WO、Hot Lot / Super Hot Run、Q-Time Risk、Move-Out Gap、下游供料和是否超过单点波动。",
             "Flow 04 不做最终根因排查，不做正式 Case 分级，不派发工程问题包。",
-            "只允许使用前端 demo / SQL 已有字段；前序 content 和 SQL 都没有的数据才使用 flow04_inputs；仍缺失则省略，不输出占位值。",
+            "只允许使用前端 demo / case_data_snapshot 已有字段；前序 content 和 case_data_snapshot 都没有的数据才使用 flow04_inputs；仍缺失则省略，不输出占位值。",
             "不要生成 Product 数、Q-Time 高风险 Lot 数、Recommendation、Shift Risk、ETA Risk、Delivery Risk Level、Affected Commitment 等前端 demo 没有的数据。",
             "脚本不构造最终展示结构或固定话术。",
         ],
@@ -579,15 +594,15 @@ def render(result: Dict[str, Any], return_type: str) -> str:
     if return_type == "json":
         return dumps(result)
     if return_type == "both":
-        return result["text"] + "\n\n```json\n" + dumps(result) + "\n```"
+        return "## 可读 Markdown\n\n" + result["text"] + "\n\n## 结构化 JSON\n\n```json\n" + dumps(result) + "\n```"
     return result["text"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run WIP Bubble Flow 04.")
     parser.add_argument("--case-id", required=True)
-    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin or '@path' for a file.")
-    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin or '@path' for a file.")
+    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin; file paths are disabled.")
+    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin; file paths are disabled.")
     parser.add_argument("--return-type", choices=["text", "json", "both"], default="text")
     parser.add_argument("--emit-model-context", action="store_true")
     parser.add_argument("--validate-only", action="store_true")
@@ -620,3 +635,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

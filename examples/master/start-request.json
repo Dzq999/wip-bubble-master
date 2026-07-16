@@ -1,6 +1,7 @@
 {
   "intent": "wip_analysis",
   "action": "start",
-  "message": "WIP最高的原因是什么",
-  "return_type": "json"
+  "message": "<运行时事实>",
+  "return_type": "json",
+  "_template_only": "仅示范结构；运行时只能使用 model_context.raw_inputs，禁止引用本文件业务内容。"
 }

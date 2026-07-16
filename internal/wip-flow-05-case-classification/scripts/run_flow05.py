@@ -7,6 +7,8 @@ import argparse
 import json
 import re
 import sys
+
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -111,7 +113,7 @@ def load_json_arg(value: Optional[str]) -> Optional[Any]:
     if value == "-":
         raw = sys.stdin.read()
     elif value.startswith("@"):
-        raw = Path(value[1:]).read_text(encoding="utf-8-sig")
+        raise ValueError("File-based JSON inputs are disabled; pass inline JSON or stdin.")
     else:
         raw = value
     return _extract_json_value(raw.lstrip("\ufeff"))
@@ -228,6 +230,8 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "knowledge_pack": load_knowledge_pack(),
         "output_contracts": load_output_contracts(),
         "generation_rules": [
+            "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
+            "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
             "优先从 previous_flows[].content 获取 Case Header、风险快照、临时措施和 Flow 04 影响范围结论；不要读取或依赖前序全文 text。",
             "Flow 05 只做 Case 分级与处置判定：Case Level、处置路径、初始主责、升级/门禁和是否进入 Flow 06。",
             "Case 等级必须基于 Flow 04 已有影响范围证据，例如 Impact Lot / WO、Hot Lot / Super Hot Run、Q-Time、Move-Out 和下游 Starvation。",
@@ -440,15 +444,15 @@ def render(result: Dict[str, Any], return_type: str) -> str:
     if return_type == "json":
         return dumps(result)
     if return_type == "both":
-        return result["text"] + "\n\n```json\n" + dumps(result) + "\n```"
+        return "## 可读 Markdown\n\n" + result["text"] + "\n\n## 结构化 JSON\n\n```json\n" + dumps(result) + "\n```"
     return result["text"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run WIP Bubble Flow 05.")
     parser.add_argument("--case-id", required=True)
-    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin or '@path' for a file.")
-    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin or '@path' for a file.")
+    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin; file paths are disabled.")
+    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin; file paths are disabled.")
     parser.add_argument("--return-type", choices=["text", "json", "both"], default="text")
     parser.add_argument("--emit-model-context", action="store_true")
     parser.add_argument("--validate-only", action="store_true")

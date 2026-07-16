@@ -1,0 +1,234 @@
+{
+  "ok": true,
+  "case_id": "<运行时 case_id>",
+  "flow_no": "09",
+  "flow_name": "<运行时事实>",
+  "flow_status": "Closed",
+  "case_status": "Processing",
+  "next_flow_no": "10",
+  "next_flow_name": "<运行时事实>",
+  "impact_clearance_status": "<运行时事实>",
+  "text": "<运行时生成的完整 Markdown；仅使用 model_context.raw_inputs 事实。>",
+  "content": {
+    "title": "09 影响消除观察",
+    "containers": [
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {
+                "label": "Case ID",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Stage",
+                "value": "<运行时事实>"
+              }
+            ]
+          },
+          {
+            "title": "Case Risk Trend｜影响消除观察（稳定趋势）",
+            "items": [
+              {
+                "label": "Actual WIP",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Stable",
+                  "tone": "complete",
+                  "source": "<运行时事实>"
+                }
+              },
+              {
+                "label": "Queue Ratio",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Stable",
+                  "tone": "complete",
+                  "source": "<运行时事实>"
+                }
+              },
+              {
+                "label": "Move-Out",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Stable",
+                  "tone": "up",
+                  "source": "<运行时事实>"
+                }
+              },
+              {
+                "label": "Downstream Supply",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Stable",
+                  "tone": "complete",
+                  "source": "<运行时事实>"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {
+            "title": "系统 / 用户触发",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 接管",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 思考过程",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析计划",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "数据 / 工具调用",
+            "items": [
+              {
+                "label": "Observation Window Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Recurrence Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Downstream Transfer Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Side Effect Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Control Release Readiness",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Next Flow Gate",
+                "value": "<运行时事实>",
+                "status": "Done"
+              }
+            ]
+          },
+          {
+            "title": "Agent 观察结果",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析判断",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 阶段输出",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "AI Agent",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {
+            "title": "业务结果",
+            "items": [
+              {
+                "label": "Impact Clearance Status",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Observation Result",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Recurrence Risk",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Downstream Transfer Risk",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Side Effect",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Control Release Readiness",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Next Flow",
+                "value": "<运行时事实>"
+              }
+            ]
+          },
+          {
+            "title": "本阶段结论",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 判断逻辑",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "状态与门禁",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "关键证据",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "_template_only": "仅示范结构；运行时只能使用 model_context.raw_inputs，禁止引用本文件业务内容。"
+}

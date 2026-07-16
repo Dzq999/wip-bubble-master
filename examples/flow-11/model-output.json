@@ -1,0 +1,244 @@
+{
+  "ok": true,
+  "case_id": "<运行时 case_id>",
+  "flow_no": "11",
+  "flow_name": "<运行时事实>",
+  "flow_status": "Closed",
+  "case_status": "Closed",
+  "next_flow_no": null,
+  "next_flow_name": null,
+  "retrospective_status": "<运行时事实>",
+  "text": "<运行时生成的完整 Markdown；仅使用 model_context.raw_inputs 事实。>",
+  "content": {
+    "title": "11 Case 复盘沉淀",
+    "containers": [
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {
+                "label": "Case ID",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Stage",
+                "value": "<运行时事实>"
+              }
+            ]
+          },
+          {
+            "title": "Case Retrospective Summary｜复盘沉淀",
+            "items": [
+              {
+                "label": "Root Cause Summary",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Archived",
+                  "tone": "complete",
+                  "source": "<运行时事实>"
+                }
+              },
+              {
+                "label": "Effective Actions",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Archived",
+                  "tone": "complete",
+                  "source": "<运行时事实>"
+                }
+              },
+              {
+                "label": "Improvement Items",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Archived",
+                  "tone": "complete",
+                  "source": "<运行时事实>"
+                }
+              },
+              {
+                "label": "Rule Optimization",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Suggestion",
+                  "tone": "up",
+                  "source": "<运行时事实>"
+                }
+              },
+              {
+                "label": "Case Tags",
+                "value": "<运行时事实>",
+                "meta": {
+                  "status": "Archived",
+                  "tone": "complete",
+                  "source": "<运行时事实>"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {
+            "title": "系统 / 用户触发",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 接管",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 思考过程",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析计划",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "数据 / 工具调用",
+            "items": [
+              {
+                "label": "Root Cause Summary",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Effective Action Review",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Ineffective Action Review",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Rule Optimization",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Case Tagging",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Case Archive",
+                "value": "<运行时事实>",
+                "status": "Done"
+              }
+            ]
+          },
+          {
+            "title": "Agent 观察结果",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析判断",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 阶段输出",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "AI Agent",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {
+            "title": "业务结果",
+            "items": [
+              {
+                "label": "Retrospective Status",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Root Cause Summary",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Effective Actions",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Improvement Items",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Rule Optimization",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Case Tags",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Archive Status",
+                "value": "<运行时事实>"
+              }
+            ]
+          },
+          {
+            "title": "本阶段结论",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 判断逻辑",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "状态与门禁",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "关键证据",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "_template_only": "仅示范结构；运行时只能使用 model_context.raw_inputs，禁止引用本文件业务内容。"
+}

@@ -7,6 +7,8 @@ import argparse
 import json
 import re
 import sys
+
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -23,7 +25,7 @@ FLOW_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 FLOW_MOCK_PATH = Path(__file__).resolve().parents[1] / "data" / "flow08_mock.json"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 
-from query_data import dumps, save_case_flow_record  # noqa: E402
+from query_data import canonicalize_case_data_snapshot, dumps, save_case_flow_record  # noqa: E402
 
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
@@ -113,7 +115,7 @@ def load_json_arg(value: Optional[str]) -> Optional[Any]:
     if value == "-":
         raw = sys.stdin.read()
     elif value.startswith("@"):
-        raw = Path(value[1:]).read_text(encoding="utf-8-sig")
+        raise ValueError("File-based JSON inputs are disabled; pass inline JSON or stdin.")
     else:
         raw = value
     return _extract_json_value(raw.lstrip("\ufeff"))
@@ -163,6 +165,14 @@ def previous_content_summary(record: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
+def extract_case_data_snapshot(records: list[Dict[str, Any]]) -> Dict[str, Any]:
+    for record in records:
+        snapshot = parse_flow_data(record).get("case_data_snapshot")
+        if isinstance(snapshot, dict) and snapshot:
+            return snapshot
+    return {}
+
+
 def iter_content_items(value: Any) -> list[Dict[str, Any]]:
     found: list[Dict[str, Any]] = []
     if isinstance(value, dict):
@@ -209,13 +219,17 @@ def _extract_snapshot_text(previous_flow_contents: list[Dict[str, Any]]) -> str:
     return json.dumps([summary.get("content", {}) for summary in previous_flow_contents], ensure_ascii=False)
 
 
-def build_dynamic_recovery_mock(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+def build_dynamic_recovery_mock(previous_flow_contents: list[Dict[str, Any]], case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Build demo recovery values only for metrics that were abnormal in prior content."""
     text = _extract_snapshot_text(previous_flow_contents)
     trend_items: list[Dict[str, Any]] = []
+    sql_results = (case_data_snapshot or {}).get("sql_results", {})
+    sql_results = sql_results if isinstance(sql_results, dict) else {}
+    high_wip = sql_results.get("locate_high_wip_stage")
+    high_wip = high_wip if isinstance(high_wip, dict) else {}
 
-    actual = _parse_number(_find_latest_labeled_value(previous_flow_contents, "Actual WIP"))
-    target = _parse_number(_find_latest_labeled_value(previous_flow_contents, "Target WIP"))
+    actual = _parse_number(high_wip.get("actual_wip")) or _parse_number(_find_latest_labeled_value(previous_flow_contents, "Actual WIP"))
+    target = _parse_number(high_wip.get("target_wip")) or _parse_number(_find_latest_labeled_value(previous_flow_contents, "Target WIP"))
     if actual is None or target is None:
         match = re.search(r"Actual\s+WIP\s*[=:]?\s*([\d,]+(?:\.\d+)?)\D+Target\s+WIP\s*[=:]?\s*([\d,]+(?:\.\d+)?)", text, flags=re.IGNORECASE)
         if not match:
@@ -328,17 +342,22 @@ def extract_flow07_recovery_context(previous_flow_contents: list[Dict[str, Any]]
     return _drop_empty(result)
 
 
-def build_flow08_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+def build_flow08_inputs(previous_flow_contents: list[Dict[str, Any]], case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    snapshot = case_data_snapshot if isinstance(case_data_snapshot, dict) else {}
+    sql_results = snapshot.get("sql_results") if isinstance(snapshot.get("sql_results"), dict) else {}
     return {
         "flow08_inputs": load_flow_mock(),
-        "derived_context": {"flow07_recovery_context": extract_flow07_recovery_context(previous_flow_contents), "dynamic_recovery_mock": build_dynamic_recovery_mock(previous_flow_contents)},
+        "case_data_snapshot": snapshot,
+        "sql_results": sql_results,
+        "derived_context": {"flow07_recovery_context": extract_flow07_recovery_context(previous_flow_contents), "dynamic_recovery_mock": build_dynamic_recovery_mock(previous_flow_contents, snapshot)},
     }
 
 
 def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> Dict[str, Any]:
     previous_records = normalize_previous_records(previous_record)
     previous_flow_contents = [previous_content_summary(record) for record in previous_records]
-    flow08_context = build_flow08_inputs(previous_flow_contents)
+    case_data_snapshot = extract_case_data_snapshot(previous_records)
+    flow08_context = build_flow08_inputs(previous_flow_contents, case_data_snapshot=case_data_snapshot)
     return {
         "case_id": case_id,
         "flow": {"flow_no": FLOW_NO, "flow_name": FLOW_NAME, "purpose": "处置效果确认"},
@@ -350,7 +369,10 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "knowledge_pack": load_knowledge_pack(),
         "output_contracts": load_output_contracts(),
         "generation_rules": [
-            "只从 previous_flows[].content 和 flow08_inputs 获取事实与门禁规则；不要读取或返回旧 Flow 08 结果。",
+            "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
+            "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
+            "原始异常值必须优先使用 case_data_snapshot.sql_results，恢复后的值使用 dynamic_recovery_mock；两者共同构成恢复趋势，不得引用 examples 或 output-contracts 中的示例数值。",
+            "SQL 或补充数据均缺失的指标必须省略并说明证据不足，禁止补写示例数值。",
             "Flow 08 默认按处置反馈已返回并完成初步确认来生成演示结果，但仍只能写初步有效和进入观察。",
             "异常数据恢复部分使用 dynamic_recovery_mock：只对前序异常指标生成恢复后演示值，原本不异常的指标保持原值。",
             "WIP Case Snapshot 仍然只包含两段：Case Header 和 Case Risk Trend｜处置后（恢复趋势）；Flow 08 不再输出 Case Risk Snapshot。",
@@ -571,15 +593,15 @@ def render(result: Dict[str, Any], return_type: str) -> str:
     if return_type == "json":
         return dumps(result)
     if return_type == "both":
-        return result["text"] + "\n\n```json\n" + dumps(result) + "\n```"
+        return "## 可读 Markdown\n\n" + result["text"] + "\n\n## 结构化 JSON\n\n```json\n" + dumps(result) + "\n```"
     return result["text"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run WIP Bubble Flow 08.")
     parser.add_argument("--case-id", required=True)
-    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin or '@path' for a file.")
-    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin or '@path' for a file.")
+    parser.add_argument("--previous-record-json", help="Previous Flow records JSON. Use '-' for stdin; file paths are disabled.")
+    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin; file paths are disabled.")
     parser.add_argument("--return-type", choices=["text", "json", "both"], default="text")
     parser.add_argument("--emit-model-context", action="store_true")
     parser.add_argument("--validate-only", action="store_true")

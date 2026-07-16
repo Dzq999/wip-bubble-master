@@ -1,14 +1,14 @@
 {
   "ok": true,
-  "case_id": "demo-case-flow-08",
+  "case_id": "<运行时 case_id>",
   "flow_no": "08",
-  "flow_name": "处置效果确认",
+  "flow_name": "<运行时事实>",
   "flow_status": "Closed",
   "case_status": "Processing",
   "next_flow_no": "09",
-  "next_flow_name": "影响消除观察",
-  "effect_confirmation_status": "初步有效，处置反馈已确认",
-  "text": "# 08 处置效果确认\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: demo-case-flow-08\n- Stage: DNW-ANN\n\n### Case Risk Trend｜处置后（恢复趋势）\n- Actual WIP: 8,050 -> 248 / Target 258\n- Queue Ratio: 99.4% -> 42%\n- Move-Out: 73% Plan -> 96% Plan\n- Downstream Supply: Starvation -> Need Further Review\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 07 已生成工程问题包与协同任务，处置反馈已返回并完成初步确认，现在进入 Flow 08 处置效果确认。\n\n### Agent 接管\n我将检查协同任务反馈、SLA、恢复指标和风险扩散信号，判断是否具备进入 Flow 09 的条件。\n\n### Agent 思考过程\n当前阶段只确认处置是否具备初步效果证据。异常指标的恢复值按动态演示口径生成：只对前序异常项生成恢复后数值，原本未异常的指标保持原值。\n\n### Agent 分析计划\n- 检查 MFG / Module Owner / PE / IE Planning / Area Owner 的反馈是否已返回。\n- 对比前序异常值和处置后的 Case Risk Trend。\n- 确认 WIP / Queue、Move-Out、下游供料和优先级批次风险是否具备进入观察的条件。\n- 判断是否进入 Flow 09 影响消除观察。\n\n### 数据 / 工具调用\n- Action Feedback Check: MFG / Module Owner / PE / IE Planning / Area Owner 已返回初步反馈，处置动作可进入效果确认 [Done]\n- SLA Check: 关键风险项已在 2h 控制窗口内完成状态更新，未触发升级 [Done]\n- Recovery Metric Check: Actual WIP 8,050 -> 248 / Target 258；Queue Ratio 99.4% -> 42%；Move-Out 73% Plan -> 96% Plan [Done]\n- WIP / Queue Trend: 原异常 WIP 已动态回落到略低于 Target，Queue 占比回落到观察区间 [Done]\n- Downstream Risk Check: PW-PH 从 Starvation 转为 Need Further Review，未见进一步扩散信号 [Done]\n- Rollback / Escalation Decision: 初步效果有效，暂不回退、不升级，进入观察 [Done]\n- Next Flow Gate: 进入 Flow 09 影响消除观察，继续确认无复发和无副作用 [Done]\n\n### Agent 观察结果\n- 前序异常指标均已形成恢复趋势，且恢复值只覆盖原本异常项。\n- 下游供料风险未继续扩大，优先级批次保护仍保持受控。\n- 当前证据支持进入观察，但还不能关闭 Case。\n\n### Agent 分析判断\n本阶段判断为初步有效。处置反馈已确认，核心异常指标已从异常值回到正常观察区间，可以进入 Flow 09 做影响消除观察。\n\n### Agent 阶段输出\n输出处置效果确认结果、恢复趋势和进入 Flow 09 的门禁。\n\n### AI Agent\n建议进入 Flow 09 影响消除观察，持续观察 WIP、Queue、Move-Out、下游供料和优先级批次风险是否稳定。\n\n## 当前阶段结果\n### 业务结果\n- Effect Confirmation Status: 初步有效，处置反馈已确认\n- Feedback Status: 角色反馈已返回\n- Recovery Evidence: Actual WIP、Queue Ratio、Move-Out、Downstream Supply 已形成恢复趋势\n- Risk Decision: 不回退、不升级，进入观察\n- Missing Evidence: 无阻塞项；后续需在 Flow 09 继续观察稳定性\n- Next Flow: 09 影响消除观察\n\n### 本阶段结论\n- 当前处置具备初步效果证据，可进入 Flow 09 影响消除观察。\n- Case 仍处于 Processing，不能关闭。\n\n### Agent 判断逻辑\n- Actual WIP 从 8,050 动态回落到 248，略低于 Target 258，说明原 WIP 异常已回到观察区间。\n- Queue Ratio 和 Move-Out 均从异常状态转为可观察区间，下游供料风险未继续扩大。\n- 处置效果仍需 Flow 09 观察确认，当前不做关闭判断。\n\n### 状态与门禁\n- Next Flow: 09 影响消除观察\n- Gate: 初步效果证据充分后进入影响消除观察\n\n### 关键证据\n- Actual WIP: 8,050 -> 248 / Target 258。\n- Queue Ratio: 99.4% -> 42%。\n- Move-Out: 73% Plan -> 96% Plan。\n- Downstream Supply: Starvation -> Need Further Review。",
+  "next_flow_name": "<运行时事实>",
+  "effect_confirmation_status": "<运行时事实>",
+  "text": "<运行时生成的完整 Markdown；仅使用 model_context.raw_inputs 事实。>",
   "content": {
     "title": "08 处置效果确认",
     "containers": [
@@ -18,17 +18,60 @@
           {
             "title": "Case Header",
             "items": [
-              {"label": "Case ID", "value": "demo-case-flow-08"},
-              {"label": "Stage", "value": "DNW-ANN"}
+              {
+                "label": "Case ID",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Stage",
+                "value": "<运行时事实>"
+              }
             ]
           },
           {
             "title": "Case Risk Trend｜处置后（恢复趋势）",
             "items": [
-              {"label": "Actual WIP", "value": "8,050 -> 248 / Target 258", "meta": {"from": "8,050", "to": "248", "target": "258", "status": "Recovered", "tone": "down", "mocked": true}},
-              {"label": "Queue Ratio", "value": "99.4% -> 42%", "meta": {"from": "99.4%", "to": "42%", "status": "Recovered", "tone": "down", "mocked": true}},
-              {"label": "Move-Out", "value": "73% Plan -> 96% Plan", "meta": {"from": "73% Plan", "to": "96% Plan", "status": "Recovered", "tone": "up", "mocked": true}},
-              {"label": "Downstream Supply", "value": "Starvation -> Need Further Review", "meta": {"from": "Starvation", "to": "Need Further Review", "status": "Recovered", "tone": "up", "mocked": true}}
+              {
+                "label": "Actual WIP",
+                "value": "<运行时事实>",
+                "meta": {
+                  "from": "<运行时事实>",
+                  "to": "<运行时事实>",
+                  "target": "<运行时事实>",
+                  "status": "Recovered",
+                  "tone": "down"
+                }
+              },
+              {
+                "label": "Queue Ratio",
+                "value": "<运行时事实>",
+                "meta": {
+                  "from": "<运行时事实>",
+                  "to": "<运行时事实>",
+                  "status": "Recovered",
+                  "tone": "down"
+                }
+              },
+              {
+                "label": "Move-Out",
+                "value": "<运行时事实>",
+                "meta": {
+                  "from": "<运行时事实>",
+                  "to": "<运行时事实>",
+                  "status": "Recovered",
+                  "tone": "up"
+                }
+              },
+              {
+                "label": "Downstream Supply",
+                "value": "<运行时事实>",
+                "meta": {
+                  "from": "<运行时事实>",
+                  "to": "<运行时事实>",
+                  "status": "Recovered",
+                  "tone": "up"
+                }
+              }
             ]
           }
         ]
@@ -36,26 +79,95 @@
       {
         "title": "当前阶段对话",
         "sections": [
-          {"title": "系统 / 用户触发", "items": ["Flow 07 已生成工程问题包与协同任务，处置反馈已返回并完成初步确认，现在进入 Flow 08 处置效果确认。"]},
-          {"title": "Agent 接管", "items": ["检查协同任务反馈、SLA、恢复指标和风险扩散信号，判断是否具备进入 Flow 09 的条件。"]},
-          {"title": "Agent 思考过程", "items": ["只确认处置是否具备初步效果证据；异常指标恢复值来自动态演示口径，原本未异常的指标保持原值。"]},
-          {"title": "Agent 分析计划", "items": ["检查角色反馈、SLA 状态、Case Risk Trend、下游风险和是否需要回退/升级。"]},
+          {
+            "title": "系统 / 用户触发",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 接管",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 思考过程",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析计划",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
           {
             "title": "数据 / 工具调用",
             "items": [
-              {"label": "Action Feedback Check", "value": "角色初步反馈已返回，处置动作可进入效果确认", "status": "Done"},
-              {"label": "SLA Check", "value": "关键风险项已在 2h 控制窗口内完成状态更新，未触发升级", "status": "Done"},
-              {"label": "Recovery Metric Check", "value": "Actual WIP 8,050 -> 248 / Target 258；Queue Ratio 99.4% -> 42%；Move-Out 73% Plan -> 96% Plan", "status": "Done"},
-              {"label": "WIP / Queue Trend", "value": "原异常 WIP 已动态回落到略低于 Target，Queue 占比回落到观察区间", "status": "Done"},
-              {"label": "Downstream Risk Check", "value": "PW-PH 从 Starvation 转为 Need Further Review，未见进一步扩散信号", "status": "Done"},
-              {"label": "Rollback / Escalation Decision", "value": "初步效果有效，暂不回退、不升级，进入观察", "status": "Done"},
-              {"label": "Next Flow Gate", "value": "进入 Flow 09 影响消除观察，继续确认无复发和无副作用", "status": "Done"}
+              {
+                "label": "Action Feedback Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "SLA Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Recovery Metric Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "WIP / Queue Trend",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Downstream Risk Check",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Rollback / Escalation Decision",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Next Flow Gate",
+                "value": "<运行时事实>",
+                "status": "Done"
+              }
             ]
           },
-          {"title": "Agent 观察结果", "items": ["前序异常指标均已形成恢复趋势，且恢复值只覆盖原本异常项。", "下游供料风险未继续扩大，优先级批次保护仍保持受控。"]},
-          {"title": "Agent 分析判断", "items": ["本阶段判断为初步有效，可以进入 Flow 09 做影响消除观察。"]},
-          {"title": "Agent 阶段输出", "items": ["输出处置效果确认结果、恢复趋势和进入 Flow 09 的门禁。"]},
-          {"title": "AI Agent", "items": ["建议进入 Flow 09 影响消除观察，持续观察 WIP、Queue、Move-Out、下游供料和优先级批次风险是否稳定。"]}
+          {
+            "title": "Agent 观察结果",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析判断",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 阶段输出",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "AI Agent",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          }
         ]
       },
       {
@@ -64,19 +176,61 @@
           {
             "title": "业务结果",
             "items": [
-              {"label": "Effect Confirmation Status", "value": "初步有效，处置反馈已确认"},
-              {"label": "Feedback Status", "value": "角色反馈已返回"},
-              {"label": "Recovery Evidence", "value": "Actual WIP、Queue Ratio、Move-Out、Downstream Supply 已形成恢复趋势"},
-              {"label": "Risk Decision", "value": "不回退、不升级，进入观察"},
-              {"label": "Missing Evidence", "value": "无阻塞项；后续需在 Flow 09 继续观察稳定性"}
+              {
+                "label": "Effect Confirmation Status",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Feedback Status",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Recovery Evidence",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Risk Decision",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Missing Evidence",
+                "value": "<运行时事实>"
+              }
             ]
           },
-          {"title": "本阶段结论", "items": ["当前处置具备初步效果证据，可进入 Flow 09 影响消除观察。", "Case 仍处于 Processing，不能关闭。"]},
-          {"title": "Agent 判断逻辑", "items": ["Actual WIP 从 8,050 动态回落到 248，略低于 Target 258。", "Queue Ratio 和 Move-Out 均从异常状态转为可观察区间，下游供料风险未继续扩大。"]},
-          {"title": "状态与门禁", "items": ["Next Flow: 09 影响消除观察", "Gate: 初步效果证据充分后进入影响消除观察"]},
-          {"title": "关键证据", "items": ["Actual WIP: 8,050 -> 248 / Target 258。", "Queue Ratio: 99.4% -> 42%。", "Move-Out: 73% Plan -> 96% Plan。", "Downstream Supply: Starvation -> Need Further Review。"]}
+          {
+            "title": "本阶段结论",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 判断逻辑",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "状态与门禁",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "关键证据",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          }
         ]
       }
     ]
-  }
+  },
+  "_template_only": "仅示范结构；运行时只能使用 model_context.raw_inputs，禁止引用本文件业务内容。"
 }

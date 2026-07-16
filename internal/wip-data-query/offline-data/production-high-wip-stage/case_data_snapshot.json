@@ -1,0 +1,148 @@
+{
+  "schema_version": "case-data-snapshot-v1",
+  "data_mode": "offline",
+  "captured_at": "2026-07-14 15:48:00",
+  "stage_name": "DNW-ANN",
+  "sql_results": {
+    "locate_high_wip_stage": {
+      "stage_name": "DNW-ANN",
+      "queue_wip": 8050,
+      "queue_actual_ratio": 0.99382716,
+      "actual_wip": 8100,
+      "target_wip": 258,
+      "wip_ratio": 31.39534884,
+      "wip_gap": 7842,
+      "wip_gap_rate": 30.39534884,
+      "update_time": "2026/7/14 15:48",
+      "biz_time": "2026/7/14 14:59"
+    },
+    "locate_wip_hold_run": {
+      "stage_name": "DNW-ANN",
+      "hold_wip": 0,
+      "queue_wip": 8025,
+      "run_wip": 50,
+      "queue_actual_ratio": "99.38%"
+    },
+    "locate_priority_lots": [
+      {
+        "stage_name": "DNW-ANN",
+        "priority": "Hot lot",
+        "lot_count": 41
+      }
+    ],
+    "locate_downstream_starvation": {
+      "next_stage_name": "PW-PH",
+      "actual_wip": 750,
+      "target_wip": 1143,
+      "wip_ratio": 0.656167979,
+      "if_starved": "Starvation"
+    },
+    "locate_impact_lot": {
+      "stage_name": "DNW-ANN",
+      "impact_lot_count": 312
+    },
+    "locate_tool_status": {
+      "active": "2 / 2",
+      "hard_down": 0,
+      "pm": 0,
+      "hard_dwon_eqp_list": "无机台Down",
+      "pm_eqp_list": "无机台PM"
+    },
+    "locate_tool_dispatch": [
+      {
+        "eqp_name": "PRTAA01",
+        "running_lot_cnt": 2,
+        "wait_lot_cnt": 12,
+        "hold_lot_cnt": 0,
+        "total_queuing_lot_cnt": 14,
+        "product_list": "28LK02,28LK03,28HK02,28LK04,28HK01,28HK03"
+      },
+      {
+        "eqp_name": "PRTAA02",
+        "running_lot_cnt": 2,
+        "wait_lot_cnt": 8,
+        "hold_lot_cnt": 0,
+        "total_queuing_lot_cnt": 10,
+        "product_list": "28LK02,28HK01,28LK04,28LK03,28HK02,28HK03"
+      }
+    ],
+    "locate_tool_efficiency": {
+      "ae_ratio": "100%",
+      "oe_ratio": "100%",
+      "current_run_dur_h": 16,
+      "current_idle_dur_h": 0,
+      "eqp_count": 2,
+      "current_total_dur_h": 16
+    },
+    "locate_move_in_trend": {
+      "lot_count_this_week": 356,
+      "lot_count_last_week": 339,
+      "move_in_ratio": "105.01%",
+      "move_in_comment": "未明显突增",
+      "move_in_inc_ratio": "5.010000000000005%"
+    },
+    "locate_move_out_trend": {
+      "lot_count_this_week": 185,
+      "lot_count_last_week": 185,
+      "move_out_ratio": "100%",
+      "move_out_comment": "未明显突增",
+      "move_out_inc_ratio": "0%"
+    },
+    "locate_product_tool_profile": [
+      {
+        "product_name": "28HK03",
+        "stage_name": "DNW-ANN",
+        "product_queue_cnt": 55,
+        "eqp_list": "PRTAA01 PRTAA02",
+        "eligible_eqp": "2 / 2",
+        "product_queue_percent": "16.98%"
+      },
+      {
+        "product_name": "28LK02",
+        "stage_name": "DNW-ANN",
+        "product_queue_cnt": 53,
+        "eqp_list": "PRTAA01 PRTAA02",
+        "eligible_eqp": "2 / 2",
+        "product_queue_percent": "16.36%"
+      },
+      {
+        "product_name": "28LK04",
+        "stage_name": "DNW-ANN",
+        "product_queue_cnt": 53,
+        "eqp_list": "PRTAA01 PRTAA02",
+        "eligible_eqp": "2 / 2",
+        "product_queue_percent": "16.36%"
+      },
+      {
+        "product_name": "28HK02",
+        "stage_name": "DNW-ANN",
+        "product_queue_cnt": 53,
+        "eqp_list": "PRTAA01 PRTAA02",
+        "eligible_eqp": "2 / 2",
+        "product_queue_percent": "16.36%"
+      },
+      {
+        "product_name": "28HK01",
+        "stage_name": "DNW-ANN",
+        "product_queue_cnt": 56,
+        "eqp_list": "PRTAA01 PRTAA02",
+        "eligible_eqp": "2 / 2",
+        "product_queue_percent": "17.28%"
+      },
+      {
+        "product_name": "28LK03",
+        "stage_name": "DNW-ANN",
+        "product_queue_cnt": 54,
+        "eqp_list": "PRTAA01 PRTAA02",
+        "eligible_eqp": "2 / 2",
+        "product_queue_percent": "16.67%"
+      }
+    ]
+  },
+  "query_errors": [],
+  "offline_source": {
+    "directory": "生产环境当前高wip的stage定位及排查csv_外发",
+    "files": 11
+  },
+  "usage_rule": "Offline mode: use this pre-exported SQL snapshot and do not connect to MySQL."
+}

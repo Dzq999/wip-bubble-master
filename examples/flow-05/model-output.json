@@ -1,45 +1,209 @@
 {
   "ok": true,
-  "case_id": "CASE-WIP-DNW-ANN-001",
+  "case_id": "<运行时 case_id>",
   "flow_no": "05",
-  "flow_name": "Case 分级与处置判定",
+  "flow_name": "<运行时事实>",
   "flow_status": "Closed",
   "case_status": "Processing",
   "next_flow_no": "06",
-  "next_flow_name": "异常原因排查",
-  "case_classification_status": "已完成分级与处置判定",
-  "text": "# 05 Case 分级与处置判定\n\n## WIP Case Snapshot\n### Case Header\n- Case ID: CASE-WIP-DNW-ANN-001\n- Priority: P1\n- Object: DNW-ANN Stage\n- Case Type: 严重 WIP Bubble\n- Current Stage: 05 Case 分级与处置判定\n- Status: Processing\n\n### Case Risk Snapshot｜异常发生时（风险快照）\n- WIP: Actual 8,050 / Target 258\n- Queue: 8,000 / 99.4%\n- Q-Time: High；Min Remain 1.8h\n- Downstream: Next Stage = PW-PH；Status = Starvation\n\n## 当前阶段对话\n### 系统 / 用户触发\nFlow 04 已完成影响范围评估，现在进入 Case 分级与处置判定。\n\n### Agent 接管\n我接管分级环节，基于影响范围、优先级批次、Q-Time、Move-Out 和下游供料风险判断 Case 等级与处置路径。\n\n### Agent 思考过程\n本阶段只把已有影响证据转化为分级和处置门禁，不做最终根因排查。\n\n### Agent 分析计划\n- 复用 Flow 04 影响范围结论。\n- 判断影响是否超过单点波动。\n- 判定 Case Level 与处置路径。\n- 指定初始主责和协作角色。\n- 确认是否进入 Flow 06 异常原因排查。\n\n### 数据 / 工具调用\n- Impact Severity: 超过单点波动，涉及 Lot / WO / Q-Time / Move-Out / 下游供料 [Done]\n- Case Level: P1 / Major [Done]\n- Disposition Path: MFG Lead 牵头，Module Owner / PE / IE 协同 [Done]\n- Owner Assignment: MFG / Case Owner [Done]\n- Next Flow Gate: Case Owner 确认后进入 Flow 06 [Done]\n\n### Agent 观察结果\n- Flow 04 已确认影响超过单点波动。\n- Q-Time High、Hot Lot / Super Hot Run 和下游 Starvation 同时存在。\n\n### Agent 分析判断\n当前证据支持将 Case 判定为 P1 / Major，并保持临时措施直到原因排查给出进一步结论。\n\n### Agent 阶段输出\nFlow 05 已完成 Case 分级与处置判定，Case 保持 Processing，可进入 Flow 06 异常原因排查。\n\n### AI Agent\n是否确认进入 06 异常原因排查？下一阶段将基于分级后的调查边界排查原因候选。\n\n## 当前阶段结果\n### 业务结果\n- Case Classification Status: 已完成分级与处置判定\n- Case Level: P1 / Major\n- Disposition Path: MFG Lead 牵头，Module Owner / PE / IE 协同\n- Initial Owner: MFG / Case Owner\n- Collaboration: Module Owner、PE、IE、Planning\n- Escalation Gate: Case Owner 确认 P1 / Major 分级与处置路径\n\n### 本阶段结论\n- DNW-ANN WIP Bubble 已满足 P1 / Major 分级条件。\n- 下一步进入 Flow 06 异常原因排查。\n\n### Agent 判断逻辑\n- 影响范围超过单点波动。\n- Q-Time High、优先级批次和下游 Starvation 均需要升级关注。\n- Flow 05 只输出分级和处置路径，不输出最终根因。\n\n### 状态与门禁\n- Next Flow: 06 异常原因排查\n- Gate: Case Owner 确认分级与处置路径后进入原因排查\n\n### 关键证据\n- Impact Scope 超过单点波动。\n- Q-Time Risk = High。\n- Downstream PW-PH Status = Starvation。",
+  "next_flow_name": "<运行时事实>",
+  "case_classification_status": "<运行时事实>",
+  "text": "<运行时生成的完整 Markdown；仅使用 model_context.raw_inputs 事实。>",
   "content": {
     "title": "05 Case 分级与处置判定",
     "containers": [
-      {"title": "WIP Case Snapshot", "sections": [
-        {"title": "Case Header", "items": [{"label": "Case ID", "value": "CASE-WIP-DNW-ANN-001"}, {"label": "Object", "value": "DNW-ANN Stage"}, {"label": "Current Stage", "value": "05 Case 分级与处置判定"}]},
-        {"title": "Case Risk Snapshot｜异常发生时（风险快照）", "items": [{"label": "WIP", "value": "Actual 8,050 / Target 258"}, {"label": "Q-Time", "value": "High"}, {"label": "Downstream", "value": "Next Stage = PW-PH；Status = Starvation"}]}
-      ]},
-      {"title": "当前阶段对话", "sections": [
-        {"title": "系统 / 用户触发", "items": ["Flow 04 已完成影响范围评估，现在进入 Case 分级与处置判定。"]},
-        {"title": "Agent 接管", "items": ["我接管分级环节，基于影响范围、优先级批次、Q-Time、Move-Out 和下游供料风险判断 Case 等级与处置路径。"]},
-        {"title": "Agent 思考过程", "items": ["本阶段只把已有影响证据转化为分级和处置门禁，不做最终根因排查。"]},
-        {"title": "Agent 分析计划", "items": ["复用 Flow 04 影响范围结论。", "判断影响是否超过单点波动。", "判定 Case Level 与处置路径。", "指定初始主责和协作角色。", "确认是否进入 Flow 06 异常原因排查。"]},
-        {"title": "数据 / 工具调用", "items": [
-          {"label": "Impact Severity", "value": "超过单点波动，涉及 Lot / WO / Q-Time / Move-Out / 下游供料", "status": "Done"},
-          {"label": "Case Level", "value": "P1 / Major", "status": "Done"},
-          {"label": "Disposition Path", "value": "MFG Lead 牵头，Module Owner / PE / IE 协同", "status": "Done"},
-          {"label": "Owner Assignment", "value": "MFG / Case Owner", "status": "Done"},
-          {"label": "Next Flow Gate", "value": "Case Owner 确认后进入 Flow 06", "status": "Done"}
-        ]},
-        {"title": "Agent 观察结果", "items": ["Flow 04 已确认影响超过单点波动。", "Q-Time High、Hot Lot / Super Hot Run 和下游 Starvation 同时存在。"]},
-        {"title": "Agent 分析判断", "items": ["当前证据支持将 Case 判定为 P1 / Major，并保持临时措施直到原因排查给出进一步结论。"]},
-        {"title": "Agent 阶段输出", "items": ["Flow 05 已完成 Case 分级与处置判定，Case 保持 Processing，可进入 Flow 06 异常原因排查。"]},
-        {"title": "AI Agent", "items": ["是否确认进入 06 异常原因排查？下一阶段将基于分级后的调查边界排查原因候选。"]}
-      ]},
-      {"title": "当前阶段结果", "sections": [
-        {"title": "业务结果", "items": [{"label": "Case Classification Status", "value": "已完成分级与处置判定"}, {"label": "Case Level", "value": "P1 / Major"}, {"label": "Disposition Path", "value": "MFG Lead 牵头，Module Owner / PE / IE 协同"}, {"label": "Initial Owner", "value": "MFG / Case Owner"}, {"label": "Collaboration", "value": "Module Owner、PE、IE、Planning"}, {"label": "Escalation Gate", "value": "Case Owner 确认 P1 / Major 分级与处置路径"}]},
-        {"title": "本阶段结论", "items": ["DNW-ANN WIP Bubble 已满足 P1 / Major 分级条件。", "下一步进入 Flow 06 异常原因排查。"]},
-        {"title": "Agent 判断逻辑", "items": ["影响范围超过单点波动。", "Q-Time High、优先级批次和下游 Starvation 均需要升级关注。", "Flow 05 只输出分级和处置路径，不输出最终根因。"]},
-        {"title": "状态与门禁", "items": ["Next Flow: 06 异常原因排查", "Gate: Case Owner 确认分级与处置路径后进入原因排查"]},
-        {"title": "关键证据", "items": ["Impact Scope 超过单点波动。", "Q-Time Risk = High。", "Downstream PW-PH Status = Starvation。"]}
-      ]}
+      {
+        "title": "WIP Case Snapshot",
+        "sections": [
+          {
+            "title": "Case Header",
+            "items": [
+              {
+                "label": "Case ID",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Object",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Current Stage",
+                "value": "<运行时事实>"
+              }
+            ]
+          },
+          {
+            "title": "Case Risk Snapshot｜异常发生时（风险快照）",
+            "items": [
+              {
+                "label": "WIP",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Q-Time",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Downstream",
+                "value": "<运行时事实>"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段对话",
+        "sections": [
+          {
+            "title": "系统 / 用户触发",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 接管",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 思考过程",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析计划",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "数据 / 工具调用",
+            "items": [
+              {
+                "label": "Impact Severity",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Case Level",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Disposition Path",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Owner Assignment",
+                "value": "<运行时事实>",
+                "status": "Done"
+              },
+              {
+                "label": "Next Flow Gate",
+                "value": "<运行时事实>",
+                "status": "Done"
+              }
+            ]
+          },
+          {
+            "title": "Agent 观察结果",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 分析判断",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 阶段输出",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "AI Agent",
+            "items": [
+              "<运行时分析文本>"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "当前阶段结果",
+        "sections": [
+          {
+            "title": "业务结果",
+            "items": [
+              {
+                "label": "Case Classification Status",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Case Level",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Disposition Path",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Initial Owner",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Collaboration",
+                "value": "<运行时事实>"
+              },
+              {
+                "label": "Escalation Gate",
+                "value": "<运行时事实>"
+              }
+            ]
+          },
+          {
+            "title": "本阶段结论",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "Agent 判断逻辑",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "状态与门禁",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          },
+          {
+            "title": "关键证据",
+            "items": [
+              "<运行时分析文本>",
+              "<运行时分析文本>",
+              "<运行时分析文本>"
+            ]
+          }
+        ]
+      }
     ]
-  }
+  },
+  "_template_only": "仅示范结构；运行时只能使用 model_context.raw_inputs，禁止引用本文件业务内容。"
 }

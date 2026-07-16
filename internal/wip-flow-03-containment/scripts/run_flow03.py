@@ -7,6 +7,8 @@ import argparse
 import json
 import re
 import sys
+
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -23,7 +25,7 @@ FLOW_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 FLOW_MOCK_PATH = Path(__file__).resolve().parents[1] / "data" / "flow03_mock.json"
 sys.path.insert(0, str(DATA_SCRIPT_DIR))
 
-from query_data import dumps, locate_flow03_downstream_starvation, locate_flow03_priority_lots, save_case_flow_record  # noqa: E402
+from query_data import canonicalize_case_data_snapshot, dumps, save_case_flow_record  # noqa: E402
 
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
@@ -112,7 +114,7 @@ def load_json_arg(value: Optional[str]) -> Optional[Any]:
     if value == "-":
         raw = sys.stdin.read()
     elif value.startswith("@"):
-        raw = Path(value[1:]).read_text(encoding="utf-8-sig")
+        raise ValueError("File-based JSON inputs are disabled; pass inline JSON or stdin.")
     else:
         raw = value
     return _extract_json_value(raw.lstrip("\ufeff"))
@@ -162,6 +164,14 @@ def previous_content_summary(record: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
+
+def extract_case_data_snapshot(records: list[Dict[str, Any]]) -> Dict[str, Any]:
+    for record in records:
+        flow_data = parse_flow_data(record)
+        snapshot = flow_data.get("case_data_snapshot")
+        if isinstance(snapshot, dict) and snapshot:
+            return snapshot
+    return {}
 def iter_content_items(value: Any) -> list[Dict[str, Any]]:
     found: list[Dict[str, Any]] = []
     if isinstance(value, dict):
@@ -261,49 +271,46 @@ def summarize_priority_lots(rows: list[Dict[str, Any]]) -> Dict[str, int]:
     return summary
 
 
-def build_flow03_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[str, Any]:
+def build_flow03_inputs(previous_flow_contents: list[Dict[str, Any]], case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     flow03_inputs = load_flow_mock()
     current_stage_context = derive_current_stage_context(previous_flow_contents)
-    current_stage = current_stage_context.get("stage_name") or "DNW-ANN"
+    snapshot = case_data_snapshot if isinstance(case_data_snapshot, dict) else {}
+    sql_snapshot = snapshot.get("sql_results", {}) if isinstance(snapshot.get("sql_results"), dict) else {}
+    current_stage = snapshot.get("stage_name") or current_stage_context.get("stage_name") or "DNW-ANN"
     previous_downstream_context = derive_downstream_context(previous_flow_contents)
     downstream_context = dict(previous_downstream_context)
+    priority_rows = sql_snapshot.get("locate_priority_lots")
+    if not isinstance(priority_rows, list):
+        priority_rows = []
+    downstream_row = sql_snapshot.get("locate_downstream_starvation")
     sql_results: Dict[str, Any] = {
         "stage_name": current_stage,
-        "priority_lots": [],
-        "downstream_starvation": None,
-        "query_errors": [],
+        "priority_lots": priority_rows,
+        "downstream_starvation": downstream_row,
+        "source": "case_data_snapshot.sql_results",
     }
 
-    try:
-        priority_rows = locate_flow03_priority_lots(current_stage)
-        sql_results["priority_lots"] = priority_rows
+    if priority_rows:
         priority_summary = summarize_priority_lots(priority_rows)
         hot_lot_protection = flow03_inputs.setdefault("hot_lot_protection", {})
         hot_lot_protection["hot_lot_count"] = priority_summary["hot_lot_count"]
         hot_lot_protection["super_hot_run_count"] = priority_summary["super_hot_run_count"]
-        hot_lot_protection["source"] = "sql.locate_flow03_priority_lots"
-    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
-        sql_results["query_errors"].append({"query": "locate_flow03_priority_lots", "error": str(exc)})
+        hot_lot_protection["source"] = "case_data_snapshot.sql_results.locate_priority_lots"
 
-    try:
-        downstream_row = locate_flow03_downstream_starvation(current_stage)
-        sql_results["downstream_starvation"] = downstream_row
-        if downstream_row:
-            sql_stage = normalize_stage_name(downstream_row.get("next_stage_name"))
-            if sql_stage:
-                downstream_context = _drop_empty(
-                    {
-                        "stage_name": sql_stage,
-                        "status": downstream_row.get("if_starved"),
-                        "actual_wip": downstream_row.get("actual_wip"),
-                        "target_wip": downstream_row.get("target_wip"),
-                        "wip_ratio": downstream_row.get("wip_ratio"),
-                        "source": "sql.locate_downstream_starvation",
-                        "previous_source": previous_downstream_context,
-                    }
-                )
-    except Exception as exc:  # pragma: no cover - depends on local MySQL availability
-        sql_results["query_errors"].append({"query": "locate_downstream_starvation", "error": str(exc)})
+    if isinstance(downstream_row, dict) and downstream_row:
+        sql_stage = normalize_stage_name(downstream_row.get("next_stage_name"))
+        if sql_stage:
+            downstream_context = _drop_empty(
+                {
+                    "stage_name": sql_stage,
+                    "status": downstream_row.get("if_starved"),
+                    "actual_wip": downstream_row.get("actual_wip"),
+                    "target_wip": downstream_row.get("target_wip"),
+                    "wip_ratio": downstream_row.get("wip_ratio"),
+                    "source": "case_data_snapshot.sql_results.locate_downstream_starvation",
+                    "previous_source": previous_downstream_context,
+                }
+            )
 
     downstream_notice = flow03_inputs.get("downstream_notice")
     if isinstance(downstream_notice, dict):
@@ -317,13 +324,14 @@ def build_flow03_inputs(previous_flow_contents: list[Dict[str, Any]]) -> Dict[st
     return {
         "flow03_inputs": flow03_inputs,
         "derived_context": {"current_stage": current_stage_context, "downstream": downstream_context},
+        "case_data_snapshot": snapshot,
         "sql_results": _drop_empty(sql_results),
     }
-
 def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> Dict[str, Any]:
     previous_records = normalize_previous_records(previous_record)
     previous_flow_contents = [previous_content_summary(record) for record in previous_records]
-    flow03_context = build_flow03_inputs(previous_flow_contents)
+    case_data_snapshot = extract_case_data_snapshot(previous_records)
+    flow03_context = build_flow03_inputs(previous_flow_contents, case_data_snapshot=case_data_snapshot)
     return {
         "case_id": case_id,
         "flow": {"flow_no": FLOW_NO, "flow_name": FLOW_NAME, "purpose": "临时措施"},
@@ -335,12 +343,14 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "knowledge_pack": load_knowledge_pack(),
         "output_contracts": load_output_contracts(),
         "generation_rules": [
+            "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
+            "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
             "优先从 previous_flows[].content 获取 Case Header、风险快照、异常确认结论和门禁状态；不要读取或依赖前序全文 text。",
             "如果多个前序流程都提供 content，按 Flow 顺序综合使用；距离当前流程最近的内容优先。",
-            "Hot Lot / Super Hot Run 数量必须优先使用 raw_inputs.sql_results.priority_lots；没有 SQL 结果时才使用 flow03_inputs。",
-            "下游对象必须优先使用 raw_inputs.sql_results.downstream_starvation.next_stage_name；SQL 无结果时使用 derived_context.downstream.stage_name 或前序 Downstream / Next Stage 的实际值，禁止改写成泛化对象。",
+            "Hot Lot / Super Hot Run 数量必须使用 Flow 01 保存的 case_data_snapshot.sql_results.locate_priority_lots；快照没有该字段时才使用 flow03_inputs。",
+            "下游对象必须优先使用 Flow 01 保存的 case_data_snapshot.sql_results.locate_downstream_starvation.next_stage_name；快照无结果时使用 derived_context.downstream.stage_name 或前序 Downstream / Next Stage 的实际值，禁止改写成泛化对象。",
             "Flow 03 只做临时风险遏制：Hot Lot / Super Hot Run 保护、非关键 Move-In 控制、下游通知和 Hold 建议。",
-            "前序 content 和 SQL 都没有的数据才使用 flow03_inputs；仍缺失则省略。",
+            "前序 content 和 case_data_snapshot 都没有的数据才使用 flow03_inputs；仍缺失则省略。",
             "临时措施必须表述为局部、可控、可回退的建议、通知、草案或待确认动作。",
             "脚本不构造最终展示结构或固定话术。",
         ],
@@ -578,15 +588,15 @@ def render(result: Dict[str, Any], return_type: str) -> str:
     if return_type == "json":
         return dumps(result)
     if return_type == "both":
-        return result["text"] + "\n\n```json\n" + dumps(result) + "\n```"
+        return "## 可读 Markdown\n\n" + result["text"] + "\n\n## 结构化 JSON\n\n```json\n" + dumps(result) + "\n```"
     return result["text"]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run WIP Bubble Flow 03.")
     parser.add_argument("--case-id", required=True)
-    parser.add_argument("--previous-record-json", help="Previous Flow 02 record JSON. Use '-' for stdin or '@path' for a file.")
-    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin or '@path' for a file.")
+    parser.add_argument("--previous-record-json", help="Previous Flow 02 record JSON. Use '-' for stdin; file paths are disabled.")
+    parser.add_argument("--model-output-json", help="Agent generated JSON. Use '-' for stdin; file paths are disabled.")
     parser.add_argument("--return-type", choices=["text", "json", "both"], default="text")
     parser.add_argument("--emit-model-context", action="store_true")
     parser.add_argument("--validate-only", action="store_true")
@@ -619,3 +629,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
