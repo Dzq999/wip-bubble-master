@@ -13,7 +13,7 @@ Flow 01 只完成“异常发现”：判断当前最高 WIP stage 是否达到 
 - 不要输出脚本中间态、stdout 状态、`internal_only` 或 `model_output_required`。
 - 不要照抄示例正文；标题可以一致，正文必须结合本次数据重新表述。
 - 不要把字段、标题和示例句式机械拼接成结果；每段内容要承接本次数据事实，体现 Flow 01 从触发、观察、判断到门禁的连续分析。
-- Demo 触发口径是系统监控自动触发。输出中只描述系统监控事件、异常对象和当前 Flow 的分析判断。
+- 触发口径是系统监控自动触发。输出中只描述系统监控事件、异常对象和当前 Flow 的分析判断。
 
 ## Markdown 主体结构
 
@@ -22,12 +22,20 @@ Flow 01 只完成“异常发现”：判断当前最高 WIP stage 是否达到 
 ```text
 # 01 异常发现
 
+## 预生成快照容器
+
+异常成立或待处理时，`WIP Case Snapshot` 由 `wip-case-snapshot` 按字段配置生成。Flow 01 的 Markdown 必须与该结构化容器使用相同字段和数值，不得自行添加或替换 Header、风险快照字段。
+
 ## WIP Case Snapshot
 ### Case Header
 - ...
 
 ### Case Risk Snapshot｜异常发生时（风险快照）
 - ...
+
+### Occur Time 字段来源
+
+`Occur Time` 必须取 `case_data_snapshot.sql_results.locate_high_wip_stage.update_time`。不得使用 `biz_time`、快照采集时间、当前系统时间或补充数据中的时间；该字段缺失时直接省略 `Occur Time`。
 
 ## 当前阶段对话
 ### 系统 / 用户触发
@@ -85,7 +93,7 @@ Flow 01 只完成“异常发现”：判断当前最高 WIP stage 是否达到 
 
 ### Case Header 内容方向
 
-覆盖前端 demo 顶部 Header 与运行态条信息。可包含：
+覆盖既定业务字段 顶部 Header 与运行态条信息。可包含：
 
 - Case ID
 - Priority
@@ -102,7 +110,7 @@ Flow 01 只完成“异常发现”：判断当前最高 WIP stage 是否达到 
 
 ### Case Risk Snapshot｜异常发生时（风险快照）内容方向
 
-覆盖前端 demo 的异常发生时风险卡片。可包含：
+覆盖既定业务字段 的异常发生时风险卡片。可包含：
 
 - WIP
 - Queue
@@ -137,21 +145,23 @@ Flow 01 只完成“异常发现”：判断当前最高 WIP stage 是否达到 
 
 ## 未发现异常时
 
-如果 `model_context.has_stage_data=false`，或没有发现达到 WIP Bubble / 严重 WIP Bubble 的 stage：
+如果 `model_context.has_stage_data=false`，或没有发现达到 WIP Bubble / 严重 WIP Bubble 的 Stage：
 
 - `case_status=Closed`
 - `next_flow_no=null`
 - 不提示进入 Flow 02
-- Markdown 仍保留三大主容器，但内容说明“未发现需要进入异常确认的 WIP Bubble stage”
+- Markdown 仅输出：`未发现达到 WIP Bubble 条件的业务 Stage，本次 Flow 01 已关闭，不进入 Flow 02。`
+- 此轻量关闭结果不要求三大主容器、9 个当前阶段对话子段落或 5 个当前阶段结果子段落。
 
 ## 文本输出前自检
 
 最终回答前必须确认：
 
-- Markdown 有 `WIP Case Snapshot`、`当前阶段对话`、`当前阶段结果` 三大主容器。
-- `WIP Case Snapshot` 只有 `Case Header` 与 `Case Risk Snapshot｜异常发生时（风险快照）`。
-- `当前阶段对话` 有 9 个三级标题。
-- `当前阶段结果` 有 `业务结果`、`本阶段结论`、`Agent 判断逻辑`、`状态与门禁`、`关键证据`。
+- 若为未发现异常的轻量关闭结果，仅输出规定的一句关闭结论。
+- 其他结果必须有 `WIP Case Snapshot`、`当前阶段对话`、`当前阶段结果` 三大主容器。
+- 其他结果中，`WIP Case Snapshot` 只有 `Case Header` 与 `Case Risk Snapshot｜异常发生时（风险快照）`。
+- 其他结果中，`当前阶段对话` 有 9 个三级标题。
+- 其他结果中，`当前阶段结果` 有 `业务结果`、`本阶段结论`、`Agent 判断逻辑`、`状态与门禁`、`关键证据`。
 
 
 

@@ -263,7 +263,7 @@ def derive_current_stage_context(previous_flow_contents: list[Dict[str, Any]]) -
                         "source_value": item.get("value"),
                     }
                 )
-    return {"stage_name": "DNW-ANN", "source": "default_demo_stage"}
+    return {"stage_name": "DNW-ANN", "source": "fallback_stage"}
 
 
 def build_flow04_inputs(previous_flow_contents: list[Dict[str, Any]], case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -325,6 +325,7 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "generation_rules": [
             "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
             "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
+            "最终 text 与 content 只能陈述当前业务事实、判断和处置，禁止输出实现、展示、测试或内部上下文术语。",
             "优先从 previous_flows[].content 获取 Case Header、风险快照、异常确认结论、临时措施和门禁状态；不要读取或依赖前序全文 text。",
             "如果多个前序流程都提供 content，按 Flow 顺序综合使用；距离当前流程最近的内容优先。",
             "Impact Lot 必须使用 Flow 01 保存的 case_data_snapshot.sql_results.locate_impact_lot.impact_lot_count；快照没有该字段时才使用 flow04_inputs。",
@@ -332,8 +333,8 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
             "下游对象必须优先使用 derived_context.downstream.stage_name；例如前序风险快照为 Next Stage = PW-PH 时，下游对象就是 PW-PH。",
             "Flow 04 只做影响范围评估：Impact Lot / WO、Hot Lot / Super Hot Run、Q-Time Risk、Move-Out Gap、下游供料和是否超过单点波动。",
             "Flow 04 不做最终根因排查，不做正式 Case 分级，不派发工程问题包。",
-            "只允许使用前端 demo / case_data_snapshot 已有字段；前序 content 和 case_data_snapshot 都没有的数据才使用 flow04_inputs；仍缺失则省略，不输出占位值。",
-            "不要生成 Product 数、Q-Time 高风险 Lot 数、Recommendation、Shift Risk、ETA Risk、Delivery Risk Level、Affected Commitment 等前端 demo 没有的数据。",
+            "只允许使用既定业务字段 / case_data_snapshot 已有字段；前序 content 和 case_data_snapshot 都没有的数据才使用 flow04_inputs；仍缺失则省略，不输出占位值。",
+            "不要生成 Product 数、Q-Time 高风险 Lot 数、Recommendation、Shift Risk、ETA Risk、Delivery Risk Level、Affected Commitment 等既定业务字段 没有的数据。",
             "脚本不构造最终展示结构或固定话术。",
         ],
         "output_language": "zh-CN",
@@ -450,7 +451,7 @@ def validate_downstream_stage_consistency(content: Dict[str, Any], expected_stag
 def find_forbidden_display_term(value: Any, path: str = "$") -> Optional[str]:
     if isinstance(value, str):
         lower_value = value.lower()
-        if any(term in lower_value for term in ("mock", "model_context", "frontend_payload", "frontend_demo")):
+        if any(term in lower_value for term in ("mock", "model_context", "internal_payload", "internal_render", "前端", "demo", "演示", "本地测试", "样例")):
             return path
         unsupported_terms = (
             "recommendation",
@@ -497,7 +498,7 @@ def normalize_model_output(model_output: Dict[str, Any], expected_downstream_sta
     found = find_forbidden_display_term({"text": text, "content": content})
     if found:
         raise ValueError(f"model_output visible text/content contains forbidden internal wording: {found}")
-    forbidden = {"frontend_payload", "frontend_demo", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
+    forbidden = {"internal_payload", "internal_render", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
     present = sorted(key for key in forbidden if key in model_output)
     if present:
         raise ValueError(f"model_output contains forbidden keys: {', '.join(present)}")

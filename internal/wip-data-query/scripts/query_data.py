@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Whitelisted MySQL access for the WIP Bubble demo skills."""
+"""Whitelisted MySQL access for the WIP Bubble local_fixture skills."""
 
 from __future__ import annotations
 
@@ -181,7 +181,7 @@ def _adapt_production_sql_for_local_mysql(name: str, sql: str) -> str:
             sql = sql.replace(source, target)
     if name == "locate_tool_efficiency":
         # The production aggregate references aliases and date_trunc semantics that MySQL does not support.
-        # This local-only equivalent preserves the same six output fields for the demo database.
+        # This local-only equivalent preserves the same six output fields for the local_fixture database.
         return """
 SELECT
   CONCAT(ROUND((SUM(COALESCE(r.run_dur_h, 0)) + SUM(COALESCE(r.idle_dur_h, 0))) /
@@ -308,7 +308,7 @@ def _insert_wip_lot_rows(cursor: Any, rows: list[tuple[str, int, str, int]]) -> 
     timestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     values = []
     for index, (stage_name, priority, lot_state, wafer_qty) in enumerate(rows, start=1):
-        lot_name = f"DEMO-{stage_name}-{priority}-{lot_state}-{index}-{timestamp.replace(' ', '-') }"
+        lot_name = f"LOCAL-{stage_name}-{priority}-{lot_state}-{index}-{timestamp.replace(' ', '-') }"
         value_by_column = {
             "fab_id": "FAB1",
             "lot_name": lot_name[:64],
@@ -316,7 +316,7 @@ def _insert_wip_lot_rows(cursor: Any, rows: list[tuple[str, int, str, int]]) -> 
             "lot_state": lot_state,
             "wafer_qty": wafer_qty,
             "priority": priority,
-            "product_name": "DEMO_PRODUCT",
+            "product_name": "LOCAL_PRODUCT",
             "updated_time": timestamp,
         }
         values.append(tuple(value_by_column[column] for column in insert_columns))
@@ -328,8 +328,8 @@ def _insert_wip_lot_rows(cursor: Any, rows: list[tuple[str, int, str, int]]) -> 
     )
 
 
-def ensure_flow03_demo_data(stage_name: str, downstream_stage_name: str = "PW-PH") -> Dict[str, Any]:
-    """Create the minimal local aifab demo tables/data used by Flow 03 when absent."""
+def ensure_flow03_local_fixture_data(stage_name: str, downstream_stage_name: str = "PW-PH") -> Dict[str, Any]:
+    """Create the minimal local aifab local_fixture tables/data used by Flow 03 when absent."""
     current_stage = (stage_name or "DNW-ANN").strip() or "DNW-ANN"
     downstream_stage = (downstream_stage_name or "PW-PH").strip() or "PW-PH"
     seeded: list[str] = []
@@ -467,19 +467,19 @@ def ensure_flow03_demo_data(stage_name: str, downstream_stage_name: str = "PW-PH
     return {"stage_name": current_stage, "downstream_stage_name": downstream_stage, "seeded": seeded}
 
 
-def locate_priority_lots(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
-    """Return Flow 03 Hot Lot / Super Hot Run rows, seeding local demo data if absent."""
+def locate_priority_lots(stage_name: str, ensure_local_fixture_data: bool = True) -> list[Dict[str, Any]]:
+    """Return Flow 03 Hot Lot / Super Hot Run rows, seeding local local_fixture data if absent."""
     try:
         rows = fetch_all(load_sql("locate_priority_lots"), (stage_name,))
     except Exception:
-        if not ensure_demo_data:
+        if not ensure_local_fixture_data:
             raise
-        ensure_flow03_demo_data(stage_name)
+        ensure_flow03_local_fixture_data(stage_name)
         rows = fetch_all(load_sql("locate_priority_lots"), (stage_name,))
     priorities = {str(row.get("priority") or "").strip().lower() for row in rows}
     missing_required_type = "hot lot" not in priorities or "super hot lot" not in priorities
-    if ensure_demo_data and (not rows or missing_required_type):
-        ensure_flow03_demo_data(stage_name)
+    if ensure_local_fixture_data and (not rows or missing_required_type):
+        ensure_flow03_local_fixture_data(stage_name)
         rows = fetch_all(load_sql("locate_priority_lots"), (stage_name,))
     return rows
 
@@ -494,7 +494,7 @@ def _insert_move_out_history_rows(cursor: Any, stage_name: str, this_week_count:
     for index in range(1, this_week_count + 1):
         timestamp = now.replace(microsecond=0)
         value_by_column = {
-            "lot_name": f"DEMO-MO-{stage_name}-TW-{index}",
+            "lot_name": f"LOCAL-MO-{stage_name}-TW-{index}",
             "stage_name": stage_name,
             "step_in_time": timestamp,
             "step_out_time": timestamp,
@@ -504,7 +504,7 @@ def _insert_move_out_history_rows(cursor: Any, stage_name: str, this_week_count:
     last_week_time = now - timedelta(days=10)
     for index in range(1, last_week_count + 1):
         value_by_column = {
-            "lot_name": f"DEMO-MO-{stage_name}-LW-{index}",
+            "lot_name": f"LOCAL-MO-{stage_name}-LW-{index}",
             "stage_name": stage_name,
             "step_in_time": last_week_time,
             "step_out_time": last_week_time,
@@ -519,8 +519,8 @@ def _insert_move_out_history_rows(cursor: Any, stage_name: str, this_week_count:
     )
 
 
-def ensure_flow04_demo_data(stage_name: str) -> Dict[str, Any]:
-    """Create the minimal local aifab demo tables/data used by Flow 04 when absent."""
+def ensure_flow04_local_fixture_data(stage_name: str) -> Dict[str, Any]:
+    """Create the minimal local aifab local_fixture tables/data used by Flow 04 when absent."""
     current_stage = (stage_name or "DNW-ANN").strip() or "DNW-ANN"
     seeded: list[str] = []
     with connection() as conn:
@@ -624,46 +624,46 @@ def ensure_flow04_demo_data(stage_name: str) -> Dict[str, Any]:
     return {"stage_name": current_stage, "seeded": seeded}
 
 
-def locate_impact_lot(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    """Return Flow 04 impact lot count, seeding local demo data if absent."""
+def locate_impact_lot(stage_name: str, ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
+    """Return Flow 04 impact lot count, seeding local local_fixture data if absent."""
     try:
         row = fetch_one(load_sql("locate_impact_lot"), (stage_name,))
     except Exception:
-        if not ensure_demo_data:
+        if not ensure_local_fixture_data:
             raise
-        ensure_flow04_demo_data(stage_name)
+        ensure_flow04_local_fixture_data(stage_name)
         row = fetch_one(load_sql("locate_impact_lot"), (stage_name,))
-    if ensure_demo_data and (not row or row.get("impact_lot_count") is None):
-        ensure_flow04_demo_data(stage_name)
+    if ensure_local_fixture_data and (not row or row.get("impact_lot_count") is None):
+        ensure_flow04_local_fixture_data(stage_name)
         row = fetch_one(load_sql("locate_impact_lot"), (stage_name,))
     return row
 
 
-def locate_move_out_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    """Return Flow 04 week-over-week move-out trend, seeding local demo data if absent."""
+def locate_move_out_trend(stage_name: str, ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
+    """Return Flow 04 week-over-week move-out trend, seeding local local_fixture data if absent."""
     try:
         row = fetch_one(load_sql("locate_move_out_trend"), (stage_name, stage_name))
     except Exception:
-        if not ensure_demo_data:
+        if not ensure_local_fixture_data:
             raise
-        ensure_flow04_demo_data(stage_name)
+        ensure_flow04_local_fixture_data(stage_name)
         row = fetch_one(load_sql("locate_move_out_trend"), (stage_name, stage_name))
-    if ensure_demo_data and (not row or row.get("lot_count_this_week") is None or row.get("lot_count_last_week") in (None, 0)):
-        ensure_flow04_demo_data(stage_name)
+    if ensure_local_fixture_data and (not row or row.get("lot_count_this_week") is None or row.get("lot_count_last_week") in (None, 0)):
+        ensure_flow04_local_fixture_data(stage_name)
         row = fetch_one(load_sql("locate_move_out_trend"), (stage_name, stage_name))
     return row
 
-def locate_downstream_starvation_with_demo(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    """Return Flow 03 downstream starvation row, seeding local demo data if absent."""
+def locate_downstream_starvation_with_local_fixture(stage_name: str, ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
+    """Return Flow 03 downstream starvation row, seeding local local_fixture data if absent."""
     try:
         row = locate_downstream_starvation(stage_name)
     except Exception:
-        if not ensure_demo_data:
+        if not ensure_local_fixture_data:
             raise
-        ensure_flow03_demo_data(stage_name)
+        ensure_flow03_local_fixture_data(stage_name)
         row = locate_downstream_starvation(stage_name)
-    if not row and ensure_demo_data:
-        ensure_flow03_demo_data(stage_name)
+    if not row and ensure_local_fixture_data:
+        ensure_flow03_local_fixture_data(stage_name)
         row = locate_downstream_starvation(stage_name)
     return row
 
@@ -687,11 +687,11 @@ def _insert_step_history_rows(cursor: Any, stage_name: str, prefix: str, this_we
     now = datetime.now().replace(microsecond=0)
     rows: list[tuple[Any, ...]] = []
     for index in range(1, this_week_count + 1):
-        value_by_column = {"lot_name": f"DEMO-{prefix}-{stage_name}-TW-{index}", "stage_name": stage_name, "step_in_time": now, "step_out_time": now, "last_updated_time": now}
+        value_by_column = {"lot_name": f"LOCAL-{prefix}-{stage_name}-TW-{index}", "stage_name": stage_name, "step_in_time": now, "step_out_time": now, "last_updated_time": now}
         rows.append(tuple(value_by_column[column] for column in insert_columns))
     last_week_time = now - timedelta(days=10)
     for index in range(1, last_week_count + 1):
-        value_by_column = {"lot_name": f"DEMO-{prefix}-{stage_name}-LW-{index}", "stage_name": stage_name, "step_in_time": last_week_time, "step_out_time": last_week_time, "last_updated_time": last_week_time}
+        value_by_column = {"lot_name": f"LOCAL-{prefix}-{stage_name}-LW-{index}", "stage_name": stage_name, "step_in_time": last_week_time, "step_out_time": last_week_time, "last_updated_time": last_week_time}
         rows.append(tuple(value_by_column[column] for column in insert_columns))
     if not rows or not insert_columns:
         return
@@ -700,12 +700,12 @@ def _insert_step_history_rows(cursor: Any, stage_name: str, prefix: str, this_we
     cursor.executemany(f"INSERT INTO aifab.dwd_wip_lot_step_his_rt ({column_sql}) VALUES ({placeholder_sql})", rows)
 
 
-def ensure_flow06_demo_data(stage_name: str) -> Dict[str, Any]:
-    """Create the minimal local demo data used by Flow 06 when source tables are absent."""
+def ensure_flow06_local_fixture_data(stage_name: str) -> Dict[str, Any]:
+    """Create the minimal local local_fixture data used by Flow 06 when source tables are absent."""
     current_stage = (stage_name or "DNW-ANN").strip() or "DNW-ANN"
     capability = _stage_capability(current_stage)
     seeded: list[str] = []
-    ensure_flow04_demo_data(current_stage)
+    ensure_flow04_local_fixture_data(current_stage)
     with connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("CREATE DATABASE IF NOT EXISTS aifab CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
@@ -811,7 +811,7 @@ def ensure_flow06_production_dependencies(stage_name: str) -> Dict[str, Any]:
     capability = _stage_capability(current_stage)
     flow_id = f"FLOW_{current_stage.replace('-', '_')}"
     seeded: list[str] = []
-    ensure_flow06_demo_data(current_stage)
+    ensure_flow06_local_fixture_data(current_stage)
     with connection() as conn:
         with conn.cursor() as cursor:
             _ensure_column(cursor, "aifab.dim_conf_flow_manu", "flow_id", "flow_id VARCHAR(128) NULL")
@@ -827,7 +827,7 @@ def ensure_flow06_production_dependencies(stage_name: str) -> Dict[str, Any]:
             cursor.execute("SELECT DISTINCT product_name FROM aifab.dim_wip_lot_rt WHERE stage_name = %s AND product_name IS NOT NULL", (current_stage,))
             products = [str(row.get("product_name")) for row in cursor.fetchall() if row.get("product_name")]
             if not products:
-                products = ["DEMO_PRODUCT"]
+                products = ["LOCAL_PRODUCT"]
             cursor.executemany("INSERT IGNORE INTO aifab.dim_conf_product (product_id, flow_id) VALUES (%s, %s)", [(product, flow_id) for product in products])
             seeded.append("dim_conf_product")
             cursor.execute("""
@@ -856,75 +856,75 @@ def ensure_flow06_production_dependencies(stage_name: str) -> Dict[str, Any]:
                 seeded.append("dwd_wip_lot_dispatch_rt")
     return {"stage_name": current_stage, "seeded": seeded}
 
-def _fetch_flow06_one(sql_name: str, stage_name: str, params: Iterable[Any], ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
+def _fetch_flow06_one(sql_name: str, stage_name: str, params: Iterable[Any], ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
     try:
         row = fetch_one(load_sql(sql_name), params)
     except Exception:
-        if not ensure_demo_data:
+        if not ensure_local_fixture_data:
             raise
-        ensure_flow06_demo_data(stage_name)
+        ensure_flow06_local_fixture_data(stage_name)
         row = fetch_one(load_sql(sql_name), params)
-    if ensure_demo_data and not row:
-        ensure_flow06_demo_data(stage_name)
+    if ensure_local_fixture_data and not row:
+        ensure_flow06_local_fixture_data(stage_name)
         row = fetch_one(load_sql(sql_name), params)
-    if ensure_demo_data and sql_name == "locate_tool_efficiency" and row and int(row.get("eqp_count") or 0) == 0:
-        ensure_flow06_demo_data(stage_name)
+    if ensure_local_fixture_data and sql_name == "locate_tool_efficiency" and row and int(row.get("eqp_count") or 0) == 0:
+        ensure_flow06_local_fixture_data(stage_name)
         row = fetch_one(load_sql(sql_name), params)
     return row
 
 
-def _fetch_flow06_all(sql_name: str, stage_name: str, params: Iterable[Any], ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
+def _fetch_flow06_all(sql_name: str, stage_name: str, params: Iterable[Any], ensure_local_fixture_data: bool = True) -> list[Dict[str, Any]]:
     try:
         rows = fetch_all(load_sql(sql_name), params)
     except Exception:
-        if not ensure_demo_data:
+        if not ensure_local_fixture_data:
             raise
-        ensure_flow06_demo_data(stage_name)
+        ensure_flow06_local_fixture_data(stage_name)
         rows = fetch_all(load_sql(sql_name), params)
-    if ensure_demo_data and not rows:
-        ensure_flow06_demo_data(stage_name)
+    if ensure_local_fixture_data and not rows:
+        ensure_flow06_local_fixture_data(stage_name)
         rows = fetch_all(load_sql(sql_name), params)
     return rows
 
 
-def locate_wip_hold_run(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_wip_hold_run", stage_name, (stage_name,), ensure_demo_data)
+def locate_wip_hold_run(stage_name: str, ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_wip_hold_run", stage_name, (stage_name,), ensure_local_fixture_data)
 
 
-def locate_tool_status(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_tool_status", stage_name, (stage_name,), ensure_demo_data)
+def locate_tool_status(stage_name: str, ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_tool_status", stage_name, (stage_name,), ensure_local_fixture_data)
 
 
-def locate_tool_dispatch(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
-    local_demo = ensure_demo_data and is_local_mysql_dialect()
-    if local_demo:
+def locate_tool_dispatch(stage_name: str, ensure_local_fixture_data: bool = True) -> list[Dict[str, Any]]:
+    local_local_fixture = ensure_local_fixture_data and is_local_mysql_dialect()
+    if local_local_fixture:
         ensure_flow06_production_dependencies(stage_name)
-    return _fetch_flow06_all("locate_tool_dispatch", stage_name, (stage_name,), local_demo)
+    return _fetch_flow06_all("locate_tool_dispatch", stage_name, (stage_name,), local_local_fixture)
 
 
-def locate_product_tool_profile(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
-    local_demo = ensure_demo_data and is_local_mysql_dialect()
-    if local_demo:
+def locate_product_tool_profile(stage_name: str, ensure_local_fixture_data: bool = True) -> list[Dict[str, Any]]:
+    local_local_fixture = ensure_local_fixture_data and is_local_mysql_dialect()
+    if local_local_fixture:
         ensure_flow06_production_dependencies(stage_name)
-    return _fetch_flow06_all("locate_product_tool_profile", stage_name, (stage_name, stage_name), local_demo)
+    return _fetch_flow06_all("locate_product_tool_profile", stage_name, (stage_name, stage_name), local_local_fixture)
 
 
-def locate_tool_efficiency(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_tool_efficiency", stage_name, (stage_name,), ensure_demo_data)
+def locate_tool_efficiency(stage_name: str, ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_tool_efficiency", stage_name, (stage_name,), ensure_local_fixture_data)
 
 
-def locate_tool_efficiency_detail(stage_name: str, ensure_demo_data: bool = True) -> list[Dict[str, Any]]:
-    return _fetch_flow06_all("locate_tool_efficiency_detail", stage_name, (stage_name,), ensure_demo_data)
+def locate_tool_efficiency_detail(stage_name: str, ensure_local_fixture_data: bool = True) -> list[Dict[str, Any]]:
+    return _fetch_flow06_all("locate_tool_efficiency_detail", stage_name, (stage_name,), ensure_local_fixture_data)
 
 
-def locate_move_in_trend(stage_name: str, ensure_demo_data: bool = True) -> Optional[Dict[str, Any]]:
-    return _fetch_flow06_one("locate_move_in_trend", stage_name, (stage_name, stage_name), ensure_demo_data)
+def locate_move_in_trend(stage_name: str, ensure_local_fixture_data: bool = True) -> Optional[Dict[str, Any]]:
+    return _fetch_flow06_one("locate_move_in_trend", stage_name, (stage_name, stage_name), ensure_local_fixture_data)
 
 
 def collect_case_data_snapshot(
     stage_name: Optional[str] = None,
     high_wip: Optional[Dict[str, Any]] = None,
-    ensure_demo_data: bool = True,
+    ensure_local_fixture_data: bool = True,
 ) -> Dict[str, Any]:
     """Collect all whitelisted SQL facts once for a case and reuse them in later flows."""
     captured_at = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
@@ -950,43 +950,43 @@ def collect_case_data_snapshot(
 
     downstream_starvation = capture(
         "locate_downstream_starvation",
-        lambda: locate_downstream_starvation_with_demo(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_downstream_starvation_with_local_fixture(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     priority_lots = capture(
         "locate_priority_lots",
-        lambda: locate_priority_lots(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_priority_lots(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     impact_lot = capture(
         "locate_impact_lot",
-        lambda: locate_impact_lot(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_impact_lot(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     move_out_trend = capture(
         "locate_move_out_trend",
-        lambda: locate_move_out_trend(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_move_out_trend(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     flow06_wip_hold_run = capture(
         "locate_wip_hold_run",
-        lambda: locate_wip_hold_run(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_wip_hold_run(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     flow06_tool_status = capture(
         "locate_tool_status",
-        lambda: locate_tool_status(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_tool_status(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     flow06_tool_efficiency = capture(
         "locate_tool_efficiency",
-        lambda: locate_tool_efficiency(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_tool_efficiency(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     flow06_tool_dispatch = capture(
         "locate_tool_dispatch",
-        lambda: locate_tool_dispatch(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_tool_dispatch(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     flow06_product_tool_profile = capture(
         "locate_product_tool_profile",
-        lambda: locate_product_tool_profile(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_product_tool_profile(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     flow06_move_in_trend = capture(
         "locate_move_in_trend",
-        lambda: locate_move_in_trend(resolved_stage, ensure_demo_data=ensure_demo_data),
+        lambda: locate_move_in_trend(resolved_stage, ensure_local_fixture_data=ensure_local_fixture_data),
     )
     sql_results = {
         "locate_high_wip_stage": warehouse_high_wip,

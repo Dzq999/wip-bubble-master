@@ -235,11 +235,12 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "generation_rules": [
             "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
             "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
+            "最终 text 与 content 只能陈述当前业务事实、判断和处置，禁止输出实现、展示、测试或内部上下文术语。",
             "同时使用 case_data_snapshot.sql_results 中的原始异常事实与 Flow 08 之后 content 中的恢复趋势；不要读取或返回旧 Flow 11 结果，也不得引用 examples 的示例数值。",
             "Flow 11 默认假设 Flow 10 关闭确认通过，本阶段完成案例复盘沉淀并关闭 Case。",
             "沉淀内容包括根因摘要、有效措施、无效或需改进措施、规则优化、案例标签和可复用经验。",
             "WIP Case Snapshot 仍然只包含两段：Case Header 和 Case Retrospective Summary｜复盘沉淀。",
-            "正常演示输出 retrospective_status=复盘沉淀完成、case_status=Closed、next_flow_no=null。",
+            "正常完成状态 retrospective_status=复盘沉淀完成、case_status=Closed、next_flow_no=null。",
             "脚本不构造最终展示结构或固定话术。",
         ],
         "output_language": "zh-CN",
@@ -322,7 +323,7 @@ def validate_data_tool_call_items(content: Dict[str, Any]) -> None:
 def find_forbidden_display_term(value: Any, path: str = "$") -> Optional[str]:
     if isinstance(value, str):
         lower_value = value.lower()
-        if any(term in lower_value for term in ("mock", "model_context", "frontend_payload", "frontend_demo")):
+        if any(term in lower_value for term in ("mock", "model_context", "internal_payload", "internal_render", "前端", "demo", "演示", "本地测试", "样例")):
             return path
         forbidden_terms = ("todo", "待模型生成", "脚本原始输出")
         if any(term in lower_value for term in forbidden_terms):
@@ -356,7 +357,7 @@ def normalize_model_output(model_output: Dict[str, Any]) -> Dict[str, Any]:
     found = find_forbidden_display_term({"text": text, "content": content})
     if found:
         raise ValueError(f"model_output visible text/content contains forbidden wording: {found}")
-    forbidden = {"frontend_payload", "frontend_demo", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
+    forbidden = {"internal_payload", "internal_render", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
     present = sorted(key for key in forbidden if key in model_output)
     if present:
         raise ValueError(f"model_output contains forbidden keys: {', '.join(present)}")

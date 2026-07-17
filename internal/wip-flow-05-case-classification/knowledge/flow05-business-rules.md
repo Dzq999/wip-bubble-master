@@ -13,7 +13,7 @@ Flow 05 的目标是把 Flow 04 的影响范围转换成可执行的 Case 等级
 - 下游是否 Starvation。
 - Flow 03 临时措施是否已生成/执行。
 
-## 默认 demo 分级规则
+## 默认分级规则
 
 - 若影响范围超过单点波动，且同时存在 Q-Time High、Hot Lot / Super Hot Run 或下游 Starvation，建议 `Case Level = P1 / Major`。
 - 若只影响当前 Stage 且无下游或 Q-Time 风险，建议 `Case Level = P2 / Standard`。

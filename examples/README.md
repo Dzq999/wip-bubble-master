@@ -1,5 +1,8 @@
-# 示例文件使用边界
+# 总控示例
 
-`examples/` 中所有 JSON 都是无业务数据的结构模板，仅用于检查 Markdown、JSON、容器与字段层级。
+本目录只保存总控启动与返回结构模板：
 
-执行任一 Flow 时，禁止读取或复用示例中的任何对象名、数值、人员、时间、风险状态或结论。唯一事实来源是目标 Flow 脚本返回的 `model_context.raw_inputs`；缺失事实必须省略或说明数据不足，禁止猜测。
+- `master/start-request.json`
+- `master/start-response.json`
+
+各 Flow 的结构模板位于对应子 Skill 的 `internal/wip-flow-*/examples/`。执行时不预加载示例；仅在维护或核对当前 Flow 的结构时按需读取，且示例不参与运行或提供业务事实。

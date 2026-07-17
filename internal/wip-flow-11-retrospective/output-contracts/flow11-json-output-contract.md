@@ -1,6 +1,6 @@
 # Flow 11 JSON Output Contract - Case 复盘沉淀
 
-Flow 11 必须返回完整 JSON，供前端按 `content.containers[].sections[].items[]` 渲染。
+Flow 11 必须返回完整 JSON，供展示层按 `content.containers[].sections[].items[]` 渲染。
 
 ## 顶层字段
 
@@ -54,5 +54,5 @@ Flow 11 必须返回完整 JSON，供前端按 `content.containers[].sections[].
 - `当前阶段结果.sections` 恰好 5 个。
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
 - `数据 / 工具调用.items` 必须覆盖 Root Cause Summary、Effective Action Review、Ineffective Action Review、Rule Optimization、Case Tagging、Case Archive。
-- 正常演示输出必须设置 `retrospective_status=复盘沉淀完成`、`case_status=Closed`、`next_flow_no=null`、`next_flow_name=null`。
+- 正常预置输出必须设置 `retrospective_status=复盘沉淀完成`、`case_status=Closed`、`next_flow_no=null`、`next_flow_name=null`。
 - 禁止输出已自动更新真实生产规则。

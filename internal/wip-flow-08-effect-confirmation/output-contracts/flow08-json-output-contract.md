@@ -60,6 +60,6 @@
 - `当前阶段结果.sections` 恰好 5 个。
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
 - `数据 / 工具调用.items` 必须覆盖 Action Feedback Check、SLA Check、Recovery Metric Check、WIP / Queue Trend、Downstream Risk Check、Rollback / Escalation Decision 和 Next Flow Gate。
-- 禁止输出 `frontend_payload`、`frontend_demo`、`model_context`、`case_snapshot`、`prompt`、`mock`。
+- 禁止输出 `internal_payload`、`internal_render`、`model_context`、`case_snapshot`、`prompt`、`mock`。
 - `Case Risk Trend｜处置后（恢复趋势）.items` 必须使用 `{label,value,meta}`，`value` 展示 `异常值 -> 正常值`，`meta` 包含 `from/to/status/tone/mocked`。
 - 禁止输出异常已完全恢复、Case 可关闭、已完成复盘、已完成处置或处置已生效。

@@ -1,11 +1,11 @@
-# Flow 07 Text Output Contract - 工程问题包与协同任务
+# Flow 07 Text Output Contract - 跨部门协同处置
 
-Flow 07 只完成“工程问题包与协同任务”：基于前序结论组织 Case 问题包、角色任务、SLA、反馈要求和恢复验证指标。
+Flow 07 只完成“跨部门协同处置”：基于前序结论组织 Case 问题包、角色任务、SLA、反馈要求和恢复验证指标。
 
 ## Markdown 结构
 
 ```text
-# 07 工程问题包与协同任务
+# 07 跨部门协同处置
 
 ## WIP Case Snapshot
 ### Case Header
@@ -41,13 +41,12 @@ Flow 07 只完成“工程问题包与协同任务”：基于前序结论组织
 
 ## 当前阶段结果
 ### 业务结果
-- Collaboration Package Status: 已生成工程问题包与协同任务建议
+- Collaboration Package Status: 已生成跨部门协同处置建议
 - Package Scope: ...
 - Primary Owner: ...
 - Collaboration Tasks: ...
 - SLA: ...
 - Recovery Metrics: ...
-- Next Flow: 08 处置效果确认
 
 ### 本阶段结论
 - ...
@@ -62,7 +61,7 @@ Flow 07 只完成“工程问题包与协同任务”：基于前序结论组织
 
 ## 内容要求
 
-- `系统 / 用户触发`：说明 Flow 06 已完成候选原因排查，现在进入工程问题包与协同任务。
+- `系统 / 用户触发`：说明 Flow 06 已完成候选原因排查，现在进入跨部门协同处置。
 - `数据 / 工具调用`：必须覆盖 Engineering Package、Root Cause Candidate、Task Breakdown、Owner Assignment、Collaboration SLA、Recovery Metric 和 Next Flow Gate。
 - `Agent 分析判断`：只判断任务包和协同路径，不宣布处置已生效。
 - `状态与门禁`：只写 Next Flow 和 Gate，不展示 Flow Status / Case Status。

@@ -58,5 +58,5 @@
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
 - `数据 / 工具调用.items` 必须覆盖 `Lot Impact`、`Priority Lot`、`Q-Time Impact`、`Move-Out Impact` 和 `Downstream Supply`。
 - `Downstream Supply.value` 必须使用前序 `Downstream / Next Stage` 实际值；如果前序为 `PW-PH`，不得输出其他泛化对象。
-- 禁止输出 `frontend_payload`、`frontend_demo`、`model_context`、`case_snapshot`、`prompt`、`mock`。
-- 禁止输出 Product 数、Q-Time 高风险 Lot 数、Recommendation、Shift Risk、ETA Risk、Delivery Risk Level、Affected Commitment 等前端 demo 没有的数据。
+- 禁止输出 `internal_payload`、`internal_render`、`model_context`、`case_snapshot`、`prompt`、`mock`。
+- 禁止输出 Product 数、Q-Time 高风险 Lot 数、Recommendation、Shift Risk、ETA Risk、Delivery Risk Level、Affected Commitment 等既定业务字段 没有的数据。

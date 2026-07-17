@@ -1,3 +1,7 @@
+## 渐进式披露
+
+路由到本 Flow 后，只按需读取本目录的 `knowledge/`、`prompts/`、`output-contracts/`、`data/` 与 `examples/`；禁止预加载兄弟 Flow 或根目录的 Flow 模板。前序事实只从已保存的 `content` / `text` 与 `case_data_snapshot.sql_results` 获取。完整规则见 [渐进式披露规则](../../references/progressive-disclosure.md)。
+
 ## 运行时事实路径（最高优先级）
 
 最终回答只可依据 `model_context.raw_inputs`，按下面顺序执行：
@@ -18,7 +22,7 @@ Flow 09 是 WIP Bubble SOP 的“影响消除观察”内部模块。它在 Flow
 - 默认假设 Flow 08 的恢复趋势已经形成，且本阶段影响消除观察通过。
 - 只做观察通过与进入关闭确认的门禁判断，不直接关闭 Case。
 - 必须覆盖无复发、无下游转移风险、无处置副作用、临时控制释放准备度。
-- 正常演示进入 Flow 10 `Case 关闭确认`；只有输入明确存在复发、下游转移、处置副作用或证据不足时，才保持 On Hold。
+- 正常预置进入 Flow 10 `Case 关闭确认`；只有输入明确存在复发、下游转移、处置副作用或证据不足时，才保持 On Hold。
 - `WIP Case Snapshot` 仍然只有两段：`Case Header` 和 `Case Risk Trend｜影响消除观察（稳定趋势）`。
 - 不宣布 Case 已关闭，不做复盘沉淀，不确认最终根因。
 

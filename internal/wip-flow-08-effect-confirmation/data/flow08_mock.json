@@ -2,7 +2,7 @@
   "effect_confirmation_framework": {
     "default_status": "Feedback Confirmed",
     "feedback_assumption": "处置反馈已返回并完成初步确认",
-    "dynamic_recovery_rule": "无需 SQL 或额外脚本；只对前序中已异常的指标生成恢复后演示值，原本不异常的指标保持原值。Actual WIP 若高于 Target WIP，则恢复值取略低于 Target WIP。",
+    "dynamic_recovery_rule": "无需 SQL 或额外脚本；只对前序中已异常的指标生成恢复后数值，原本不异常的指标保持原值。Actual WIP 若高于 Target WIP，则恢复值取略低于 Target WIP。",
     "case_risk_trend_style": {
       "section_title": "Case Risk Trend｜处置后（恢复趋势）",
       "snapshot_rule": "Flow 08 的 WIP Case Snapshot 仍然只有 Case Header 和 Case Risk Trend 两段；Case Risk Trend 替代前序 Flow 的 Case Risk Snapshot。",
@@ -17,12 +17,11 @@
       "下游 Starvation 是否未进一步扩大",
       "Hot Lot / Super Hot Run 是否仍被保护"
     ],
-    "gate_to_flow09": "处置动作具备初步效果证据，且没有新增高风险扩散信号",
-    "hold_gate": "只有输入明确缺少角色反馈、缺少恢复指标或指标仍恶化时，不进入 Flow 09"
+    "gate_to_flow09": "处置动作具备初步效果证据，且没有新增高风险扩散信号"
   },
   "guardrails": [
     "Flow 08 只确认初步效果，不宣布异常已完全恢复。",
     "默认假设处置反馈已返回并完成初步确认，生成进入 Flow 09 的处置效果确认结果。",
-    "不能使用前端 demo 中不存在的恢复指标值；恢复值必须来自 dynamic_recovery_mock 或前序 content。"
+    "不能使用既定业务字段中不存在的恢复指标值；恢复值必须来自 dynamic_recovery_mock 或前序 content。"
   ]
 }

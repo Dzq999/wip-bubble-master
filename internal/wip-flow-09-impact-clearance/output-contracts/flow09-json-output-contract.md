@@ -1,6 +1,6 @@
 # Flow 09 JSON Output Contract - 影响消除观察
 
-Flow 09 必须返回完整 JSON，供前端按 `content.containers[].sections[].items[]` 渲染。
+Flow 09 必须返回完整 JSON，供展示层按 `content.containers[].sections[].items[]` 渲染。
 
 ## 顶层字段
 
@@ -54,5 +54,5 @@ Flow 09 必须返回完整 JSON，供前端按 `content.containers[].sections[].
 - `当前阶段结果.sections` 恰好 5 个。
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
 - `数据 / 工具调用.items` 必须覆盖 Observation Window Check、Recurrence Check、Downstream Transfer Check、Side Effect Check、Control Release Readiness、Next Flow Gate。
-- 正常演示输出必须设置 `impact_clearance_status=观察通过`、`case_status=Processing`、`next_flow_no=10`、`next_flow_name=Case 关闭确认`。
+- 正常预置输出必须设置 `impact_clearance_status=观察通过`、`case_status=Processing`、`next_flow_no=10`、`next_flow_name=Case 关闭确认`。
 - 禁止输出 Case 已关闭、已完成复盘、已完成案例沉淀或最终根因已确认。

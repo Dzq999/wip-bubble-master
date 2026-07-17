@@ -256,7 +256,7 @@ def derive_current_stage_context(previous_flow_contents: list[Dict[str, Any]]) -
                         "source_value": value,
                     }
                 )
-    return {"stage_name": "DNW-ANN", "source": "default_demo_stage"}
+    return {"stage_name": "DNW-ANN", "source": "fallback_stage"}
 
 
 def summarize_priority_lots(rows: list[Dict[str, Any]]) -> Dict[str, int]:
@@ -345,6 +345,7 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "generation_rules": [
             "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
             "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
+            "最终 text 与 content 只能陈述当前业务事实、判断和处置，禁止输出实现、展示、测试或内部上下文术语。",
             "优先从 previous_flows[].content 获取 Case Header、风险快照、异常确认结论和门禁状态；不要读取或依赖前序全文 text。",
             "如果多个前序流程都提供 content，按 Flow 顺序综合使用；距离当前流程最近的内容优先。",
             "Hot Lot / Super Hot Run 数量必须使用 Flow 01 保存的 case_data_snapshot.sql_results.locate_priority_lots；快照没有该字段时才使用 flow03_inputs。",
@@ -457,7 +458,7 @@ def validate_downstream_stage_consistency(content: Dict[str, Any], expected_stag
 def find_forbidden_display_term(value: Any, path: str = "$") -> Optional[str]:
     if isinstance(value, str):
         lower_value = value.lower()
-        if any(term in lower_value for term in ("mock", "model_context", "frontend_payload", "frontend_demo")):
+        if any(term in lower_value for term in ("mock", "model_context", "internal_payload", "internal_render", "前端", "demo", "演示", "本地测试", "样例")):
             return path
         if "clean / 下游 shift" in lower_value:
             return path
@@ -491,7 +492,7 @@ def normalize_model_output(model_output: Dict[str, Any], expected_downstream_sta
     found = find_forbidden_display_term({"text": text, "content": content})
     if found:
         raise ValueError(f"model_output visible text/content contains forbidden internal wording: {found}")
-    forbidden = {"frontend_payload", "frontend_demo", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
+    forbidden = {"internal_payload", "internal_render", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
     present = sorted(key for key in forbidden if key in model_output)
     if present:
         raise ValueError(f"model_output contains forbidden keys: {', '.join(present)}")

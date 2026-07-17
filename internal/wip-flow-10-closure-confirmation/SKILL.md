@@ -1,3 +1,7 @@
+## 渐进式披露
+
+路由到本 Flow 后，只按需读取本目录的 `knowledge/`、`prompts/`、`output-contracts/`、`data/` 与 `examples/`；禁止预加载兄弟 Flow 或根目录的 Flow 模板。前序事实只从已保存的 `content` / `text` 与 `case_data_snapshot.sql_results` 获取。完整规则见 [渐进式披露规则](../../references/progressive-disclosure.md)。
+
 ## 运行时事实路径（最高优先级）
 
 最终回答只可依据 `model_context.raw_inputs`，按下面顺序执行：
@@ -18,7 +22,7 @@ Flow 10 是 WIP Bubble SOP 的“Case 关闭确认”内部模块。它在 Flow 
 - 默认假设 Flow 09 的影响消除观察通过，且本阶段关闭确认通过。
 - 只做关闭条件确认和进入 Flow 11 复盘沉淀的门禁判断。
 - 必须覆盖任务完成、风险解除、恢复指标、临时控制关闭、责任人确认。
-- 正常演示进入 Flow 11 `Case 复盘沉淀`；只有输入明确任务未完成、风险未解除、指标未恢复、受控动作未关闭或责任人未确认时，才保持 On Hold。
+- 正常预置进入 Flow 11 `Case 复盘沉淀`；只有输入明确任务未完成、风险未解除、指标未恢复、受控动作未关闭或责任人未确认时，才保持 On Hold。
 - `WIP Case Snapshot` 仍然只有两段：`Case Header` 和 `Case Closure Checklist｜关闭确认`。
 - 不做复盘沉淀，不写已完成案例沉淀，不确认最终根因。
 

@@ -1,3 +1,7 @@
+## 渐进式披露
+
+路由到本 Flow 后，只按需读取本目录的 `knowledge/`、`prompts/`、`output-contracts/`、`data/` 与 `examples/`；禁止预加载兄弟 Flow 或根目录的 Flow 模板。前序事实只从已保存的 `content` / `text` 与 `case_data_snapshot.sql_results` 获取。完整规则见 [渐进式披露规则](../../references/progressive-disclosure.md)。
+
 ## 运行时事实路径（最高优先级）
 
 最终回答只可依据 `model_context.raw_inputs`，按下面顺序执行：
@@ -29,7 +33,7 @@ llow 06 是 WIP Bubble SOP 的“异常原因排查”内部模块。它在 llow
   `internal/wip data query/sql/locate_move_in_trend.sql`
   `internal/wip data query/sql/locate_move_out_trend.sql`
 
-果果本地 MySQL 缺少表或演示数据，`query_data.py` 会按最小 demo 数据集补齐后重查。
+果果本地 MySQL 缺少表或本地数据，`query_data.py` 会按最小本地数据集补齐后重查。
 
 ## 执行方式
 

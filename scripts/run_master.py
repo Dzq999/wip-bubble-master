@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Master router for the WIP Bubble SOP demo skills."""
+"""Master router for the WIP Bubble SOP local_fixture skills."""
 
 from __future__ import annotations
 
@@ -64,7 +64,7 @@ INTERNAL_RESPONSE_KEYS = {"case_data_snapshot"}
 
 
 def public_result(value: Any) -> Any:
-    """Remove persisted internal inputs from payloads rendered for users or the frontend."""
+    """Remove persisted internal inputs from payloads rendered for users or the internal."""
     if isinstance(value, dict):
         return {
             key: public_result(item)
@@ -372,7 +372,7 @@ def run_next_flow_07(record: Dict[str, Any]) -> Dict[str, Any]:
     previous_records.append(record)
     flow_result = run_flow07(case_id, previous_record=previous_records)
     if not flow_result.get("ok", True):
-        return model_output_required_response(flow_result, current_case_summary(record), "07", "工程问题包与协同任务")
+        return model_output_required_response(flow_result, current_case_summary(record), "07", "跨部门协同处置")
     result = dict(flow_result)
     result["reason"] = "continued_case_and_ran_flow_07"
     return result
@@ -510,13 +510,11 @@ def handle(
     sql_results = case_data_snapshot.get("sql_results", {}) if isinstance(case_data_snapshot, dict) else {}
     sql_results = sql_results if isinstance(sql_results, dict) else {}
     high_wip = sql_results.get("locate_high_wip_stage")
-    downstream_starvation = sql_results.get("locate_downstream_starvation")
     case_snapshot = build_case_snapshot(
         case_id,
+        case_data_snapshot=case_data_snapshot,
         flow_no="01",
         flow_name="异常发现",
-        warehouse_high_wip=high_wip,
-        downstream_starvation=downstream_starvation,
     )
     # return_type 只用于 Master 最终渲染；不要把默认 return_type 传给内部 Flow。
     flow_result = run_flow01(

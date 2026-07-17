@@ -220,7 +220,7 @@ def _extract_snapshot_text(previous_flow_contents: list[Dict[str, Any]]) -> str:
 
 
 def build_dynamic_recovery_mock(previous_flow_contents: list[Dict[str, Any]], case_data_snapshot: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Build demo recovery values only for metrics that were abnormal in prior content."""
+    """Build local_fixture recovery values only for metrics that were abnormal in prior content."""
     text = _extract_snapshot_text(previous_flow_contents)
     trend_items: list[Dict[str, Any]] = []
     sql_results = (case_data_snapshot or {}).get("sql_results", {})
@@ -307,7 +307,7 @@ def build_dynamic_recovery_mock(previous_flow_contents: list[Dict[str, Any]], ca
 
     return {
         "feedback_assumption": "处置反馈已返回并完成初步确认",
-        "mock_rule": "只对前序中已异常的指标生成恢复后演示值；原本不异常的指标保持原值。",
+        "recovery_rule": "只对前序中已异常的指标生成恢复后数值；原本不异常的指标保持原值。",
         "case_risk_trend_section_title": "Case Risk Trend｜处置后（恢复趋势）",
         "trend_items": trend_items,
     }
@@ -371,10 +371,11 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "generation_rules": [
             "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
             "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
+            "最终 text 与 content 只能陈述当前业务事实、判断和处置，禁止输出实现、展示、测试或内部上下文术语。",
             "原始异常值必须优先使用 case_data_snapshot.sql_results，恢复后的值使用 dynamic_recovery_mock；两者共同构成恢复趋势，不得引用 examples 或 output-contracts 中的示例数值。",
             "SQL 或补充数据均缺失的指标必须省略并说明证据不足，禁止补写示例数值。",
-            "Flow 08 默认按处置反馈已返回并完成初步确认来生成演示结果，但仍只能写初步有效和进入观察。",
-            "异常数据恢复部分使用 dynamic_recovery_mock：只对前序异常指标生成恢复后演示值，原本不异常的指标保持原值。",
+            "Flow 08 默认按处置反馈已返回并完成初步确认来生成初步效果确认结果，但仍只能写初步有效和进入观察。",
+            "异常数据恢复部分使用 dynamic_recovery_mock：只对前序异常指标生成恢复后数值，原本不异常的指标保持原值。",
             "WIP Case Snapshot 仍然只包含两段：Case Header 和 Case Risk Trend｜处置后（恢复趋势）；Flow 08 不再输出 Case Risk Snapshot。",
             "只有输入明确缺少反馈或恢复指标证据时，才设置 case_status=On Hold、next_flow_no=null。",
             "脚本不构造最终展示结构或固定话术。",
@@ -459,7 +460,7 @@ def validate_data_tool_call_items(content: Dict[str, Any]) -> None:
 def find_forbidden_display_term(value: Any, path: str = "$") -> Optional[str]:
     if isinstance(value, str):
         lower_value = value.lower()
-        if any(term in lower_value for term in ("mock", "model_context", "frontend_payload", "frontend_demo")):
+        if any(term in lower_value for term in ("mock", "model_context", "internal_payload", "internal_render", "前端", "demo", "演示", "本地测试", "样例")):
             return path
         forbidden_terms = (
             "异常已完全恢复",
@@ -502,7 +503,7 @@ def normalize_model_output(model_output: Dict[str, Any]) -> Dict[str, Any]:
     found = find_forbidden_display_term({"text": text, "content": content})
     if found:
         raise ValueError(f"model_output visible text/content contains forbidden wording: {found}")
-    forbidden = {"frontend_payload", "frontend_demo", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
+    forbidden = {"internal_payload", "internal_render", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
     present = sorted(key for key in forbidden if key in model_output)
     if present:
         raise ValueError(f"model_output contains forbidden keys: {', '.join(present)}")

@@ -61,7 +61,7 @@ Flow 08 只完成“处置效果确认”：基于 Flow 07 的协同任务、SLA
 
 ## 内容要求
 
-- `系统 / 用户触发`：说明 Flow 07 已生成工程问题包与协同任务，且处置反馈已返回并完成初步确认，现在进入处置效果确认。
+- `系统 / 用户触发`：说明 Flow 07 已生成跨部门协同处置，且处置反馈已返回并完成初步确认，现在进入处置效果确认。
 - `数据 / 工具调用`：必须覆盖 Action Feedback Check、SLA Check、Recovery Metric Check、WIP / Queue Trend、Downstream Risk Check、Rollback / Escalation Decision 和 Next Flow Gate。
 - `Agent 分析判断`：只判断初步效果和是否需要回退/升级，不宣布异常完全恢复。
 - `状态与门禁`：只写 Next Flow 和 Gate，不展示 Flow Status / Case Status。

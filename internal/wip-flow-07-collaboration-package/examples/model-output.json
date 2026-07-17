@@ -10,7 +10,7 @@
   "collaboration_package_status": "<运行时事实>",
   "text": "<运行时生成的完整 Markdown；仅使用 model_context.raw_inputs 事实。>",
   "content": {
-    "title": "07 工程问题包与协同任务",
+    "title": "07 跨部门协同处置",
     "containers": [
       {
         "title": "WIP Case Snapshot",

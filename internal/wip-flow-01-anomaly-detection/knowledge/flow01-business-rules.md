@@ -20,11 +20,11 @@
 - `facts.queue_actual_ratio`：Queue / Actual。
 - `facts.wip_gap`：Actual 与 Target 的差值。
 - `facts.wip_gap_rate`：Actual 相对 Target 的偏差比例。
-- `facts.trend`：demo mock 中的趋势描述。
-- `facts.trigger_source`：demo mock 中的触发来源。
-- `case_snapshot`：前端红框需要的态势快照。
+- `facts.trend`：补充输入 中的趋势描述。
+- `facts.trigger_source`：补充输入 中的触发来源。
+- `wip_case_snapshot`：已由快照模块生成的 Case Header 与风险快照容器，必须原样使用。
 
-SQL 和 mock 都没有提供的字段，不要编造，不要用 `-` 强行展示；让前端选择不展示。
+SQL 和 mock 都没有提供的字段，不要编造，不要用 `-` 强行展示；让展示层选择不展示。
 
 ## WIP 状态判断规则
 

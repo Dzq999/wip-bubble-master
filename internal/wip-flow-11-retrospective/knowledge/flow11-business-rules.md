@@ -1,8 +1,8 @@
 # Flow 11 Business Rules
 
-Flow 11 用于完成 Case 复盘沉淀，是 WIP Bubble Demo 的最终流程。
+Flow 11 用于完成 Case 复盘沉淀，是 WIP Bubble 的最终流程。
 
-## 默认演示口径
+## 默认预置口径
 
 - 默认假设 Flow 10 已经完成关闭确认。
 - 默认复盘沉淀完成，顶层 `case_status=Closed`。

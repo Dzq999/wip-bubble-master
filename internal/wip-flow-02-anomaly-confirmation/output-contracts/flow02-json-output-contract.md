@@ -55,4 +55,4 @@
 - `当前阶段对话.sections` 恰好 9 个。
 - `当前阶段结果.sections` 恰好 5 个。
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
-- 禁止输出 `frontend_payload`、`frontend_demo`、`model_context`、`case_snapshot`、`prompt`、`mock`。
+- 禁止输出 `internal_payload`、`internal_render`、`model_context`、`case_snapshot`、`prompt`、`mock`。

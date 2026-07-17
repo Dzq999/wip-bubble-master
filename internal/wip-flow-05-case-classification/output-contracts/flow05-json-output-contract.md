@@ -57,5 +57,5 @@
 - `当前阶段结果.sections` 恰好 5 个。
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
 - `数据 / 工具调用.items` 必须覆盖 `Impact Severity`、`Case Level`、`Disposition Path`、`Owner Assignment` 和 `Next Flow Gate`。
-- 禁止输出 `frontend_payload`、`frontend_demo`、`model_context`、`case_snapshot`、`prompt`、`mock`。
+- 禁止输出 `internal_payload`、`internal_render`、`model_context`、`case_snapshot`、`prompt`、`mock`。
 - 禁止输出最终根因、原因候选排序、工程问题包已派发或任务已派发结论。

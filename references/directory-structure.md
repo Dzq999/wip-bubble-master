@@ -1,6 +1,6 @@
 # WIP Bubble 总控 Skill 目录结构
 
-本 Skill 按“一个外层总控 Skill + 内部模块”的方式部署。内部能力统一放在 `internal/` 下，因此 FaaS 平台和前端只需要调用一个 Skill 入口。
+本 Skill 使用一个总控入口与多个按 Flow 隔离的内部模块。所有模块遵守 [渐进式披露规则](progressive-disclosure.md)：总控不预加载 Flow 资源，路由后只按需读取当前子 Skill 的本地资源。
 
 ```text
 wip-bubble-master/
@@ -8,97 +8,48 @@ wip-bubble-master/
   knowledge/
     factory-exception-process.md
   examples/
+    README.md
     master/
       start-request.json
       start-response.json
-    flow-01/
-      model-context-input.json
-      model-output.json
-    flow-02/
-      model-output.json
-    flow-03/
-      model-output.json
-    flow-04/
-      model-output.json
   scripts/
     run_master.py
   references/
     directory-structure.md
+    progressive-disclosure.md
+    runtime-fact-policy.md
   internal/
     config/
-      db_config.json
-      db_config.example.json
     wip-data-query/
       SKILL.md
       sql/
-        locate_high_wip_stage.sql
-        locate_downstream_starvation.sql
-        get_latest_active_case.sql
-        get_case_record.sql
-        update_case_flow_record.sql
-        insert_case_flow_record.sql
       scripts/
-        query_data.py
+      offline-data/
     wip-case-snapshot/
       SKILL.md
       data/
-        snapshot_mock.json
       output-contracts/
-        snapshot-input-contract.md
       scripts/
-        build_snapshot.py
     wip-flow-01-anomaly-detection/
       SKILL.md
       data/
-        flow01_mock.json
       knowledge/
-        flow01-business-rules.md
       output-contracts/
-        flow01-text-output-contract.md
-        flow01-json-output-contract.md
       prompts/
-        flow01_result_prompt.md
+      examples/
+        model-context-input.json
+        model-output.json
       scripts/
         run_flow01.py
     wip-flow-02-anomaly-confirmation/
-      SKILL.md
-      data/
-        flow02_mock.json
-      knowledge/
-        flow02-business-rules.md
-      output-contracts/
-        flow02-text-output-contract.md
-        flow02-json-output-contract.md
-      prompts/
-        flow02_result_prompt.md
-      scripts/
-        run_flow02.py
-    wip-flow-03-containment/
-      SKILL.md
-      data/
-        flow03_mock.json
-      knowledge/
-        flow03-business-rules.md
-      output-contracts/
-        flow03-text-output-contract.md
-        flow03-json-output-contract.md
-      prompts/
-        flow03_result_prompt.md
-      scripts/
-        run_flow03.py
-    wip-flow-04-impact-assessment/
-      SKILL.md
-      data/
-        flow04_mock.json
-      knowledge/
-        flow04-business-rules.md
-      output-contracts/
-        flow04-text-output-contract.md
-        flow04-json-output-contract.md
-      prompts/
-        flow04_result_prompt.md
-      scripts/
-        run_flow04.py
+      ...
+      examples/
+        model-output.json
+    ...
+    wip-flow-11-retrospective/
+      ...
+      examples/
+        model-output.json
 ```
 
 ## 外部入口
@@ -133,17 +84,7 @@ python .agents/skills/wip-bubble-master/scripts/run_master.py --request-json <in
 
 ### `examples`
 
-存放输入输出示例，不参与运行。
-
-当前文件：
-
-- `master/start-request.json`：总控 Skill 输入示例。
-- `master/start-response.json`：总控 Skill 输出示例。
-- `flow-01/model-context-input.json`：Flow 01 模型上下文输入示例。
-- `flow-01/model-output.json`：Flow 01 模型结构化输出示例。
-- `flow-02/model-output.json`：Flow 02 异常确认模型结构化输出示例。
-- `flow-03/model-output.json`：Flow 03 临时措施模型结构化输出示例。
-- `flow-04/model-output.json`：Flow 04 影响范围评估模型结构化输出示例。
+根目录只保留总控示例。每个 Flow 的结构模板位于对应 `internal/wip-flow-*/examples/`，总控不预加载这些模板；仅在维护或核对当前 Flow 的结构时按需读取当前子 Skill 的本地 `examples/`。
 
 ## 内部模块
 
@@ -171,10 +112,10 @@ python .agents/skills/wip-bubble-master/scripts/run_master.py --request-json <in
 
 职责：
 
-- 合并数仓可查字段与 mock 缺失字段。
-- 输出原始 `snapshot_inputs` / `source_data` 数据包，并通过 `output-contracts/snapshot-input-contract.md` 说明字段边界；最终 `case_header` / `risk_snapshot` 由对应 Flow Agent 生成。
+- 基于唯一的 `case_data_snapshot.sql_results` 提取 Flow 01 所需 SQL 字段，并合并必要补充数据。
+- 直接输出结构化 `WIP Case Snapshot` 容器；字段、标签与模板由 `wip-case-snapshot/output-contracts/snapshot-display-schema.md` 控制，Flow 01 原样使用。
 - 通用快照 mock 放在 `internal/wip-case-snapshot/data/snapshot_mock.json`；Flow 专属补充数据分别放在各自 `data/` 目录，例如 `flow01_mock.json`、`flow02_mock.json`。
-- 如果 SQL 和 mock 都没有某字段，则不在输出 JSON 中提供该字段，前端选择不展示。
+- 如果 SQL 和 mock 都没有某字段，则不在输出 JSON 中提供该字段，展示层选择不展示。
 
 ### `internal/wip-flow-01-anomaly-detection`
 
@@ -233,7 +174,7 @@ internal/wip-flow-xx-name/
 约定：
 
 - 外层 `knowledge/` 存放所有 Flow 共享的工厂异常处理大背景。
-- Flow 内部 `knowledge/` 存放本流程业务知识、判断条件、角色口径和 demo 约束。
+- Flow 内部 `knowledge/` 存放本流程业务知识、判断条件、角色口径和 输出约束。
 - `prompts/` 存放模型生成提示词；`output-contracts/` 单独存放每个 Flow 的最终回答格式契约，或内部数据模块的原始输入包契约。
 - `scripts/` 只做查询、计算、上下文构建、模型 JSON 修复和状态保存。
 - 大量自然语言分析不要写死在 Python 中。

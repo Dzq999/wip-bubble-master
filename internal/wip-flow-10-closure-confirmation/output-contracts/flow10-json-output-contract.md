@@ -1,6 +1,6 @@
 # Flow 10 JSON Output Contract - Case 关闭确认
 
-Flow 10 必须返回完整 JSON，供前端按 `content.containers[].sections[].items[]` 渲染。
+Flow 10 必须返回完整 JSON，供展示层按 `content.containers[].sections[].items[]` 渲染。
 
 ## 顶层字段
 
@@ -54,5 +54,5 @@ Flow 10 必须返回完整 JSON，供前端按 `content.containers[].sections[].
 - `当前阶段结果.sections` 恰好 5 个。
 - `数据 / 工具调用.items` 必须包含业务事实和 `status=Done`，不能只有 Done。
 - `数据 / 工具调用.items` 必须覆盖 Task Completion Check、Risk Clearance Check、Metric Recovery Check、Control Release Check、Owner Closure Confirmation、Next Flow Gate。
-- 正常演示输出必须设置 `closure_confirmation_status=关闭确认通过`、`case_status=Processing`、`next_flow_no=11`、`next_flow_name=Case 复盘沉淀`。
+- 正常预置输出必须设置 `closure_confirmation_status=关闭确认通过`、`case_status=Processing`、`next_flow_no=11`、`next_flow_name=Case 复盘沉淀`。
 - 禁止输出已完成复盘、已完成案例沉淀或最终根因已确认。

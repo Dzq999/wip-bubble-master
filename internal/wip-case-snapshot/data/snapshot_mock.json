@@ -1,6 +1,6 @@
 ﻿{
     "default":  {
-                    "operator":  "Wang Fei",
+                    "operator":  "System Monitor",
                     "case_age":  "6h",
                     "owner":  "MFG / Case Owner",
                     "priority_by_status":  {

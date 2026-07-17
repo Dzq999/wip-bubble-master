@@ -29,7 +29,7 @@ from query_data import dumps, save_case_flow_record  # noqa: E402
 
 ISSUE_TYPE = "分析一个WIP报警的处理流程"
 FLOW_NO = "07"
-FLOW_NAME = "工程问题包与协同任务"
+FLOW_NAME = "跨部门协同处置"
 NEXT_FLOW_NO = "08"
 NEXT_FLOW_NAME = "处置效果确认"
 REQUIRED_TOOL_LABELS = (
@@ -220,7 +220,7 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
     flow07_context = build_flow07_inputs(previous_flow_contents)
     return {
         "case_id": case_id,
-        "flow": {"flow_no": FLOW_NO, "flow_name": FLOW_NAME, "purpose": "工程问题包与协同任务"},
+        "flow": {"flow_no": FLOW_NO, "flow_name": FLOW_NAME, "purpose": "跨部门协同处置"},
         "previous_flows": previous_flow_contents,
         "raw_inputs": {
             "previous_flow_contents": previous_flow_contents,
@@ -231,8 +231,9 @@ def build_model_context(case_id: str, previous_record: Optional[Any] = None) -> 
         "generation_rules": [
             "唯一事实源为 model_context.raw_inputs：只可使用 SQL 快照、前序 Flow 内容及当前 Flow 实际存在的补充数据；examples、output-contracts 和 prompt 绝不是事实来源。",
             "生成前逐项核对具体对象、数值、人员、时长、状态和结论是否能回溯到 raw_inputs；无来源则省略或写数据不足，禁止猜测、补造或套用示例。",
+            "最终 text 与 content 只能陈述当前业务事实、判断和处置，禁止输出实现、展示、测试或内部上下文术语。",
             "只从 previous_flows[].content 和 flow07_inputs 获取事实与角色矩阵；不要读取或返回旧 Flow 07 结果。",
-            "Flow 07 只生成工程问题包与协同任务建议，不声称已经真实派单、通知、执行或恢复。",
+            "Flow 07 只生成跨部门协同处置建议，不声称已经真实派单、通知、执行或恢复。",
             "任务拆分必须围绕 Flow 06 候选原因、Flow 05 处置路径和 Flow 04 影响范围。",
             "恢复指标必须可在 Flow 08 中验证；不要输出没有验证口径的指标。",
             "脚本不构造最终展示结构或固定话术。",
@@ -317,7 +318,7 @@ def validate_data_tool_call_items(content: Dict[str, Any]) -> None:
 def find_forbidden_display_term(value: Any, path: str = "$") -> Optional[str]:
     if isinstance(value, str):
         lower_value = value.lower()
-        if any(term in lower_value for term in ("mock", "model_context", "frontend_payload", "frontend_demo")):
+        if any(term in lower_value for term in ("mock", "model_context", "internal_payload", "internal_render", "前端", "demo", "演示", "本地测试", "样例")):
             return path
         forbidden_terms = (
             "已真实派单",
@@ -360,7 +361,7 @@ def normalize_model_output(model_output: Dict[str, Any]) -> Dict[str, Any]:
     found = find_forbidden_display_term({"text": text, "content": content})
     if found:
         raise ValueError(f"model_output visible text/content contains forbidden wording: {found}")
-    forbidden = {"frontend_payload", "frontend_demo", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
+    forbidden = {"internal_payload", "internal_render", "model_context", "case_snapshot", "prompt", "output_contract", "output_contracts"}
     present = sorted(key for key in forbidden if key in model_output)
     if present:
         raise ValueError(f"model_output contains forbidden keys: {', '.join(present)}")

@@ -1,3 +1,7 @@
+## 渐进式披露
+
+路由到本 Flow 后，只按需读取本目录的 `knowledge/`、`prompts/`、`output-contracts/`、`data/` 与 `examples/`；禁止预加载兄弟 Flow 或根目录的 Flow 模板。前序事实只从已保存的 `content` / `text` 与 `case_data_snapshot.sql_results` 获取。完整规则见 [渐进式披露规则](../../references/progressive-disclosure.md)。
+
 ## 运行时事实路径（最高优先级）
 
 最终回答只可依据 `model_context.raw_inputs`，按下面顺序执行：
@@ -8,15 +12,15 @@
 
 `examples/`、output-contracts 和 prompt 只能参考 JSON/Markdown 结构，运行时禁止读取或复用其中的任何业务数据或结论。完整约束见 [运行时事实来源规则](../../references/runtime-fact-policy.md)。
 
-# WIP Flow 07 - 工程问题包与协同任务
+# WIP Flow 07 - 跨部门协同处置
 
 
-Flow 07 是 WIP Bubble SOP 的“工程问题包与协同任务”内部模块。它在 Flow 06 完成异常原因候选排查后执行，把候选原因、影响范围、临时措施和分级处置路径组织成一个可协同推进的问题包与角色任务清单。
+Flow 07 是 WIP Bubble SOP 的“跨部门协同处置”内部模块。它在 Flow 06 完成异常原因候选排查后执行，把候选原因、影响范围、临时措施和分级处置路径组织成一个可协同推进的问题包与角色任务清单。
 
 ## 职责边界
 
 - 复用 Flow 01/02/03/04/05/06 的保存结果，只读取每条记录 `flow_data_json.content` 下的展示内容。
-- 输出工程问题包摘要、任务拆分、角色主责/协同、SLA、恢复指标、反馈要求和进入 Flow 08 的门禁。
+- 输出协同处置摘要、任务拆分、角色主责/协同、SLA、恢复指标、反馈要求和进入 Flow 08 的门禁。
 - 可以生成“协同任务建议 / 待派发任务清单”，但不能声称已经真实调用外部系统派单、通知或完成处置。
 - 不重新确认异常是否成立，不重新做影响范围评估，不宣布最终根因已确认，不判断处置已经生效。
 - 若 Flow 06 未给出可用候选原因或缺少必要证据，只能输出 On Hold 和补证要求。

@@ -1,3 +1,7 @@
+## 渐进式披露
+
+路由到本 Flow 后，只按需读取本目录的 `knowledge/`、`prompts/`、`output-contracts/`、`data/` 与 `examples/`；禁止预加载兄弟 Flow 或根目录的 Flow 模板。前序事实只从已保存的 `content` / `text` 与 `case_data_snapshot.sql_results` 获取。完整规则见 [渐进式披露规则](../../references/progressive-disclosure.md)。
+
 ## 运行时事实路径（最高优先级）
 
 最终回答只可依据 `model_context.raw_inputs`，按下面顺序执行：
@@ -11,14 +15,14 @@
 # WIP Flow 08 - 处置效果确认
 
 
-Flow 08 是 WIP Bubble SOP 的“处置效果确认”内部模块。它在 Flow 07 生成工程问题包与协同任务后执行，用于判断协同处置是否已经具备初步效果证据，是否需要回退/升级，或是否可以进入 Flow 09 影响消除观察。
+Flow 08 是 WIP Bubble SOP 的“处置效果确认”内部模块。它在 Flow 07 生成跨部门协同处置后执行，用于判断协同处置是否已经具备初步效果证据，是否需要回退/升级，或是否可以进入 Flow 09 影响消除观察。
 
 ## 职责边界
 
 - 复用 Flow 01/02/03/04/05/06/07 的保存结果，只读取每条记录 `flow_data_json.content` 下的展示内容。
 - 默认假设 Flow 07 协同处置反馈已返回并完成初步确认；检查 SLA、恢复指标和门禁是否具备进入观察的证据。
 - 输出效果确认状态：有效、部分有效、未确认、需回退/升级或证据不足。
-- 正常演示进入 Flow 09；只有输入明确缺少反馈、缺少恢复指标或指标仍恶化时，才保持 On Hold。
+- 正常预置进入 Flow 09；只有输入明确缺少反馈、缺少恢复指标或指标仍恶化时，才保持 On Hold。
 - Flow 08 的 `WIP Case Snapshot` 仍然只有两段：`Case Header` 和 `Case Risk Trend｜处置后（恢复趋势）`；`Case Risk Trend` 替代前序 Flow 的 `Case Risk Snapshot`。
 - 动态生成 `Case Risk Trend｜处置后（恢复趋势）`：只对前序异常指标 mock 恢复值，原本不异常的指标保持原值。
 - 不宣布异常已完全恢复，不关闭 Case，不做复盘沉淀。

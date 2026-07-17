@@ -1,3 +1,7 @@
+## 渐进式披露
+
+路由到本 Flow 后，只按需读取本目录的 `knowledge/`、`prompts/`、`output-contracts/`、`data/` 与 `examples/`；禁止预加载兄弟 Flow 或根目录的 Flow 模板。前序事实只从已保存的 `content` / `text` 与 `case_data_snapshot.sql_results` 获取。完整规则见 [渐进式披露规则](../../references/progressive-disclosure.md)。
+
 ## 运行时事实路径（最高优先级）
 
 最终回答只可依据 `model_context.raw_inputs`，按下面顺序执行：
@@ -18,7 +22,7 @@ Flow 11 是 WIP Bubble SOP 的最终“Case 复盘沉淀”内部模块。它在
 - 默认假设 Flow 10 已经完成 Case 关闭确认，本阶段复盘沉淀完成。
 - 输出复盘沉淀结果，并将顶层 `case_status` 置为 `Closed`。
 - 必须覆盖根因摘要、有效措施、无效或需改进措施、规则优化、案例标签和案例归档。
-- 正常演示没有下一流程：`next_flow_no=null`、`next_flow_name=null`。
+- 正常预置没有下一流程：`next_flow_no=null`、`next_flow_name=null`。
 - `WIP Case Snapshot` 仍然只有两段：`Case Header` 和 `Case Retrospective Summary｜复盘沉淀`。
 - 不输出新的处置动作，不重新开启 Case，不把沉淀内容写成新的现场指令。
 
